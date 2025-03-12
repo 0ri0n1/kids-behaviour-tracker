@@ -60,8 +60,15 @@
         width: 360px;
         max-width: 90vw;
         max-height: 400px;
-        overflow-y: auto;
+        overflow-y: scroll;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
         border: 1px solid #e2e8f0;
+      }
+      
+      /* Hide scrollbar for Webkit browsers */
+      .emoji-popup::-webkit-scrollbar {
+        display: none;
       }
       
       /* Position emoji picker better on mobile */
@@ -88,6 +95,16 @@
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
         width: 100% !important;
         border: none !important;
+      }
+      
+      /* Hide scrollbars in emoji-mart */
+      .emoji-mart ::-webkit-scrollbar {
+        display: none !important;
+      }
+      
+      .emoji-mart * {
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
       }
       
       .simple-emoji-picker {
@@ -190,6 +207,17 @@
         top: 0;
         background-color: white;
         z-index: 1;
+      }
+      
+      /* Hide scrollbars universally */
+      .no-scrollbar {
+        overflow-y: scroll;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+      }
+      
+      .no-scrollbar::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera */
       }
     </style>
     
@@ -1693,7 +1721,15 @@
               gridContainer.style.gap = '4px';
               gridContainer.style.padding = '6px';
               gridContainer.style.maxHeight = '250px';
-              gridContainer.style.overflowY = 'auto';
+              gridContainer.style.overflowY = 'scroll';
+              gridContainer.style.scrollbarWidth = 'none'; // Firefox
+              gridContainer.style.msOverflowStyle = 'none'; // IE and Edge
+              
+              // Hide WebKit scrollbar
+              const styleSheet = document.createElement('style');
+              styleSheet.textContent = '.custom-emoji-grid::-webkit-scrollbar { display: none; }';
+              document.head.appendChild(styleSheet);
+              gridContainer.classList.add('custom-emoji-grid');
               
               // Create search input
               const searchInput = document.createElement('input');
@@ -1769,13 +1805,13 @@
             }
           }, []);
           
-          return <div ref={containerRef} className="simple-emoji-picker"></div>;
+          return <div ref={containerRef} className="simple-emoji-picker no-scrollbar"></div>;
         };
         
         return (
           <div className="relative">
             <div 
-              className="emoji-popup p-3"
+              className="emoji-popup p-3 no-scrollbar"
               onClick={(e) => e.stopPropagation()} 
               ref={iconPickerRef}
             >
