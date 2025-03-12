@@ -21,11 +21,11 @@
     -->
     
     <!--React and React DOM-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
     <!--Babel for JSX (development only - should be precompiled for production)-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.22.20/babel.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <!--p5.js-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
@@ -107,9 +107,62 @@
       </div>
     </noscript>
 
-    <script type="text/babel">
+    <script type="text/babel" data-presets="react">
+    // Error Boundary Component
+    class ErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null, errorInfo: null };
+      }
+      
+      static getDerivedStateFromError(error) {
+        return { hasError: true };
+      }
+      
+      componentDidCatch(error, errorInfo) {
+        console.error("React Error:", error, errorInfo);
+        this.setState({ error, errorInfo });
+      }
+      
+      render() {
+        if (this.state.hasError) {
+          return (
+            <div style={{ padding: '20px', margin: '20px', border: '2px solid red', borderRadius: '5px', backgroundColor: '#fff8f8' }}>
+              <h2>Something went wrong</h2>
+              <details style={{ whiteSpace: 'pre-wrap', margin: '10px 0' }}>
+                <summary>Show Error Details</summary>
+                <p>{this.state.error && this.state.error.toString()}</p>
+                <p>Component Stack: {this.state.errorInfo && this.state.errorInfo.componentStack}</p>
+              </details>
+              <button 
+                onClick={() => window.location.reload()}
+                style={{ padding: '8px 16px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                Reload Page
+              </button>
+            </div>
+          );
+        }
+        
+        return this.props.children;
+      }
+    }
+    
     // Main App Component
-    const App = () => {
+    function App() {
+      // Helper functions for date operations
+      const formatDateKey = (date) => {
+        // Ensure consistent formatting with padding for single-digit month/day
+        const year = date.getFullYear();
+        const month = String(date.getMonth()).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      
+      const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+      
+      const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+      
       // Children management
       const [kids, setKids] = React.useState([{ id: 1, name: "My Kid", avatar: "👧" }]);
       const [activeKidId, setActiveKidId] = React.useState(1);
@@ -166,6 +219,9 @@
       // Show/hide behavior lists
       const [showBehaviorManager, setShowBehaviorManager] = React.useState(false);
 
+      // Add state to force re-renders
+      const [renderTrigger, setRenderTrigger] = React.useState(0);
+
       // Get the active kid's data
       const activeKid = kids.find(kid => kid.id === activeKidId) || kids[0];
       const activeKidData = kidsData[activeKidId] || kidsData[1];
@@ -177,13 +233,20 @@
           ? pointsUpdater(activeKidData.points) 
           : pointsUpdater;
         
+        // Create a new reference to ensure React detects the change
+        const updatedKidData = {
+          ...activeKidData,
+          points: newPoints
+        };
+        
+        // Create a new reference for kidsData to ensure React detects the change
         setKidsData({
           ...kidsData,
-          [activeKidId]: {
-            ...activeKidData,
-            points: newPoints
-          }
+          [activeKidId]: updatedKidData
         });
+        
+        // Debug log
+        console.log(`Updated points for kid ${activeKidId}: ${newPoints}`);
       };
       
       const behaviors = activeKidData.behaviors;
@@ -192,13 +255,25 @@
           ? behaviorsUpdater(activeKidData.behaviors)
           : behaviorsUpdater;
           
+        // Create a new reference to ensure React detects the change
+        const updatedKidData = {
+          ...activeKidData,
+          behaviors: newBehaviors
+        };
+        
+        // Create a new reference for kidsData to ensure React detects the change
         setKidsData({
           ...kidsData,
-          [activeKidId]: {
-            ...activeKidData,
-            behaviors: newBehaviors
-          }
+          [activeKidId]: updatedKidData
         });
+        
+        // IMPORTANT: Force a re-render after state update
+        setTimeout(() => {
+          console.log("Updated behaviors state:", kidsData[activeKidId].behaviors);
+        }, 0);
+        
+        // Debug log
+        console.log(`Updated behaviors for kid ${activeKidId}:`, newBehaviors);
       };
       
       const dailyBehaviorLogs = activeKidData.dailyBehaviorLogs;
@@ -207,13 +282,20 @@
           ? logsUpdater(activeKidData.dailyBehaviorLogs)
           : logsUpdater;
           
+        // Create a new reference to ensure React detects the change
+        const updatedKidData = {
+          ...activeKidData,
+          dailyBehaviorLogs: newLogs
+        };
+        
+        // Create a new reference for kidsData to ensure React detects the change
         setKidsData({
           ...kidsData,
-          [activeKidId]: {
-            ...activeKidData,
-            dailyBehaviorLogs: newLogs
-          }
+          [activeKidId]: updatedKidData
         });
+        
+        // Debug log
+        console.log(`Updated daily logs for kid ${activeKidId}:`, newLogs);
       };
       
       const goodBehaviors = activeKidData.goodBehaviors;
@@ -222,12 +304,16 @@
           ? behaviorsUpdater(activeKidData.goodBehaviors)
           : behaviorsUpdater;
           
+        // Create a new reference to ensure React detects the change
+        const updatedKidData = {
+          ...activeKidData,
+          goodBehaviors: newBehaviors
+        };
+        
+        // Create a new reference for kidsData to ensure React detects the change
         setKidsData({
           ...kidsData,
-          [activeKidId]: {
-            ...activeKidData,
-            goodBehaviors: newBehaviors
-          }
+          [activeKidId]: updatedKidData
         });
       };
       
@@ -237,12 +323,16 @@
           ? behaviorsUpdater(activeKidData.badBehaviors)
           : behaviorsUpdater;
           
+        // Create a new reference to ensure React detects the change
+        const updatedKidData = {
+          ...activeKidData,
+          badBehaviors: newBehaviors
+        };
+        
+        // Create a new reference for kidsData to ensure React detects the change
         setKidsData({
           ...kidsData,
-          [activeKidId]: {
-            ...activeKidData,
-            badBehaviors: newBehaviors
-          }
+          [activeKidId]: updatedKidData
         });
       };
       
@@ -252,12 +342,16 @@
           ? rewardsUpdater(activeKidData.rewards)
           : rewardsUpdater;
           
+        // Create a new reference to ensure React detects the change
+        const updatedKidData = {
+          ...activeKidData,
+          rewards: newRewards
+        };
+        
+        // Create a new reference for kidsData to ensure React detects the change
         setKidsData({
           ...kidsData,
-          [activeKidId]: {
-            ...activeKidData,
-            rewards: newRewards
-          }
+          [activeKidId]: updatedKidData
         });
       };
 
@@ -342,10 +436,20 @@
       
       // Switch active kid
       const switchKid = (id) => {
+        console.log(`Switching from kid ${activeKidId} to kid ${id}`);
+        
+        // Get current kid data
+        const currentKidData = kidsData[id] || {};
+        console.log(`New kid's data:`, currentKidData);
+        
         setActiveKidId(id);
+        
         // Reset behavior selections when switching
         setSelectedGoodBehavior(null);
         setSelectedBadBehavior(null);
+        
+        // Force UI refresh
+        setSelectedDate(new Date(selectedDate));
       };
       
       // Kid manager component
@@ -566,20 +670,83 @@
         }
       }, [useSimpleBackground]);
 
-      // Helper functions for date operations
-      const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+      // Force re-render on critical state changes
+      React.useEffect(() => {
+        console.log(`Critical state changed - Forcing refresh`);
+        console.log(`Current kid: ${activeKid.name} (ID: ${activeKidId})`);
+        
+        // The selectedDate is updated to force a re-render
+        const newDate = new Date(selectedDate);
+        newDate.setMilliseconds(newDate.getMilliseconds() + Math.random() * 100);
+        setSelectedDate(newDate);
+        
+        // Also increment render trigger to ensure components re-render
+        setRenderTrigger(prev => prev + 1);
+      }, [activeKidId, JSON.stringify(kidsData)]);
+      
+      // Additional UI refresh when behaviors or logs change
+      React.useEffect(() => {
+        if (activeKidId && kidsData[activeKidId]) {
+          console.log(`Detected change in behaviors or logs - Refreshing UI`);
+          
+          // Increment render trigger
+          setRenderTrigger(prev => prev + 1);
+          
+          // Force re-render
+          const refreshDate = new Date(selectedDate);
+          refreshDate.setMilliseconds(refreshDate.getMilliseconds() + Math.random() * 100);
+          setSelectedDate(refreshDate);
+        }
+      }, [
+        activeKidId, 
+        // Use the actual behaviors and logs in dependencies, not stringify
+        kidsData[activeKidId]?.behaviors, 
+        kidsData[activeKidId]?.dailyBehaviorLogs,
+        // Also watch points
+        kidsData[activeKidId]?.points
+      ]);
 
-      const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+      // CRITICAL NEW EFFECT: Watch specific date behaviors to force UI update when they change
+      React.useEffect(() => {
+        if (activeKidId && kidsData[activeKidId]) {
+          const dateKey = formatDateKey(selectedDate);
+          const dateBehaviors = kidsData[activeKidId]?.behaviors?.[dateKey];
+          const dateLogs = kidsData[activeKidId]?.dailyBehaviorLogs?.[dateKey];
+          
+          console.log(`Selected date ${dateKey} behaviors/logs changed - VERIFYING DATA`);
+          console.log(`Current behaviors for date ${dateKey}:`, dateBehaviors);
+          console.log(`Current logs for date ${dateKey}:`, dateLogs);
+          
+          // Verify date key is consistent
+          if (selectedDate) {
+            const formattedKey = formatDateKey(selectedDate);
+            console.log(`Verifying date key formatting - Current selected date: ${selectedDate.toISOString()}`);
+            console.log(`Formatted as key: ${formattedKey}`);
+            
+            // Force a re-render if data has changed
+            setRenderTrigger(prev => prev + 1);
+          }
+        }
+      }, [
+        selectedDate, 
+        activeKidId,
+        // Watch only behaviors and logs for the selected date
+        JSON.stringify(kidsData[activeKidId]?.behaviors?.[formatDateKey(selectedDate)] || {}),
+        JSON.stringify(kidsData[activeKidId]?.dailyBehaviorLogs?.[formatDateKey(selectedDate)] || [])
+      ]);
 
-      const formatDateKey = (date) => {
-        return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-      };
+      // Force re-render when switching kids
+      React.useEffect(() => {
+        console.log(`Active kid changed to ${activeKid.name} (ID: ${activeKidId})`);
+        // No need to do anything else - this dependency will trigger a re-render
+      }, [activeKidId]);
 
       // Handle behavior recording with specific behavior selection
       const recordBehavior = () => {
         const dateKey = formatDateKey(selectedDate);
-        const currentBehaviors = behaviors[dateKey] || { good: 0, bad: 0 };
-
+        
+        console.log(`STARTING RECORD BEHAVIOR - Date: ${dateKey}, Kid: ${activeKid.name}(${activeKidId})`);
+        
         // Get selected behavior
         const selectedBehavior = activeBehavior === 'good'
           ? goodBehaviors.find(b => b.id === selectedGoodBehavior)
@@ -590,19 +757,26 @@
           return;
         }
 
-        // Update behavior count
-        const newBehaviors = {
-          ...behaviors,
-          [dateKey]: {
-            ...currentBehaviors,
-            [activeBehavior]: currentBehaviors[activeBehavior] + 1
-          }
+        console.log(`Selected ${activeBehavior} behavior:`, selectedBehavior);
+        
+        // Get the most current kid data from state
+        const currentKidData = {...kidsData[activeKidId]};
+        console.log("Current kid data before update:", currentKidData);
+        
+        // Get current behaviors and logs for this date 
+        const currentDayBehaviors = currentKidData.behaviors[dateKey] || { good: 0, bad: 0 };
+        const currentDateLogs = currentKidData.dailyBehaviorLogs[dateKey] || [];
+        
+        console.log("Current day behaviors:", currentDayBehaviors);
+        console.log("Current date logs:", currentDateLogs);
+        
+        // Create updated day behaviors
+        const updatedDayBehaviors = {
+          ...currentDayBehaviors,
+          [activeBehavior]: (currentDayBehaviors[activeBehavior] || 0) + 1
         };
-
-        setBehaviors(newBehaviors);
-
-        // Add to daily behavior logs
-        const currentLogs = dailyBehaviorLogs[dateKey] || [];
+        
+        // Create new log entry
         const newLog = {
           id: Date.now(),
           type: activeBehavior,
@@ -612,27 +786,59 @@
           icon: selectedBehavior.icon,
           timestamp: new Date().toLocaleTimeString()
         };
-
-        setDailyBehaviorLogs({
-          ...dailyBehaviorLogs,
-          [dateKey]: [...currentLogs, newLog]
-        });
-
-        // Add or subtract points
+        
+        // Calculate new points
+        const newPoints = activeBehavior === 'good'
+          ? currentKidData.points + selectedBehavior.points
+          : Math.max(0, currentKidData.points - selectedBehavior.points);
+        
+        // Create a single updated kid data object
+        const updatedKidData = {
+          ...currentKidData,
+          points: newPoints,
+          behaviors: {
+            ...currentKidData.behaviors,
+            [dateKey]: updatedDayBehaviors
+          },
+          dailyBehaviorLogs: {
+            ...currentKidData.dailyBehaviorLogs,
+            [dateKey]: [...currentDateLogs, newLog]
+          }
+        };
+        
+        // Update all kid data in a single operation
+        setKidsData(prevKidsData => ({
+          ...prevKidsData,
+          [activeKidId]: updatedKidData
+        }));
+        
+        console.log("AFTER UPDATE - Full updated kid data:", updatedKidData);
+        console.log(`AFTER UPDATE - Day behaviors for ${dateKey}:`, updatedKidData.behaviors[dateKey]);
+        console.log(`AFTER UPDATE - Day logs for ${dateKey}:`, updatedKidData.dailyBehaviorLogs[dateKey]);
+        
+        // Handle confetti for good behaviors
         if (activeBehavior === 'good') {
-          setCurrentPoints(prev => prev + selectedBehavior.points);
           setShowConfetti(true);
           setTimeout(() => setShowConfetti(false), 3000);
-        } else {
-          setCurrentPoints(prev => Math.max(0, prev - selectedBehavior.points));
         }
 
-        // Reset selection
+        // Reset behavior selection
         if (activeBehavior === 'good') {
           setSelectedGoodBehavior(null);
         } else {
           setSelectedBadBehavior(null);
         }
+        
+        // Force UI refresh with render trigger (keep this to ensure UI updates)
+        setRenderTrigger(prev => prev + 1);
+        
+        // Force another UI refresh after a delay to ensure changes are visible
+        setTimeout(() => {
+          console.log("VERIFYING UPDATE - Current kid data after delay:", kidsData[activeKidId]);
+          console.log(`VERIFYING UPDATE - Day behaviors after delay:`, kidsData[activeKidId]?.behaviors?.[dateKey]);
+          console.log(`VERIFYING UPDATE - Day logs after delay:`, kidsData[activeKidId]?.dailyBehaviorLogs?.[dateKey]);
+          setRenderTrigger(prev => prev + 1);
+        }, 100);
       };
 
       // Add a new behavior
@@ -702,25 +908,40 @@
 
         const days = [];
 
+        // Get the most current kid data directly from state
+        const currentKidData = kidsData[activeKidId] || {};
+        const currentBehaviors = currentKidData.behaviors || {};
+        
+        console.log(`CALENDAR RENDER - kid:${activeKid.name}(${activeKidId}), month:${month}, year:${year}`);
+        console.log(`CALENDAR RENDER - current behaviors:`, currentBehaviors);
+
         // Add empty cells for the days before the first day of the month
         for (let i = 0; i < firstDayOfMonth; i++) {
-          days.push(<div key={`empty-${i}`} className="h-12 md:h-16"></div>);
+          days.push(<div key={`empty-${i}-${activeKidId}-${month}-${renderTrigger}`} className="h-12 md:h-16"></div>);
         }
 
         // Add cells for each day of the month
         for (let day = 1; day <= daysInMonth; day++) {
           const date = new Date(year, month, day);
           const dateKey = formatDateKey(date);
-          const dayBehaviors = behaviors[dateKey] || { good: 0, bad: 0 };
+          
+          // Get day behaviors directly from current state
+          const dayBehaviors = currentBehaviors[dateKey] || { good: 0, bad: 0 };
+
+          // Log when behaviors exist for a day
+          if (dayBehaviors.good > 0 || dayBehaviors.bad > 0) {
+            console.log(`CALENDAR RENDER - Day ${day} behaviors:`, dayBehaviors);
+          }
 
           const isSelected =
             selectedDate.getDate() === day &&
             selectedDate.getMonth() === month &&
             selectedDate.getFullYear() === year;
 
+          // Include renderTrigger in the key to force re-render when it changes
           days.push(
             <div 
-              key={day} 
+              key={`${activeKidId}-day-${day}-${month}-${renderTrigger}-g${dayBehaviors.good}-b${dayBehaviors.bad}`} 
               className={`calendar-day h-12 md:h-16 border rounded-lg flex flex-col items-center justify-center cursor-pointer ${isSelected ? 'bg-blue-200 border-blue-500' :
                 dayBehaviors.good > dayBehaviors.bad ? 'bg-green-100' :
                   dayBehaviors.bad > 0 ? 'bg-red-100' : 'bg-white'
@@ -760,7 +981,16 @@
       // Render daily behavior logs
       const renderDailyLogs = () => {
         const dateKey = formatDateKey(selectedDate);
-        const logs = dailyBehaviorLogs[dateKey] || [];
+        
+        // Get the most current kid data directly from state
+        const currentKidData = kidsData[activeKidId] || {};
+        const currentLogs = currentKidData.dailyBehaviorLogs || {};
+        const logs = currentLogs[dateKey] || [];
+        
+        console.log(`LOGS RENDER - kid:${activeKid.name}(${activeKidId}), date:${dateKey}, logs found:${logs.length}`);
+        if (logs.length > 0) {
+          console.log(`LOGS RENDER - Actual logs data:`, logs);
+        }
 
         if (logs.length === 0) {
           return (
@@ -775,8 +1005,8 @@
             {
               logs.map((log) => (
                 <div 
-                        key={log.id} 
-                        className={`flex items-center p-2 my-1 rounded-lg ${log.type === 'good' ? 'bg-green-50' : 'bg-red-50'
+                  key={`${activeKidId}-log-${log.id}-${renderTrigger}`} 
+                  className={`flex items-center p-2 my-1 rounded-lg ${log.type === 'good' ? 'bg-green-50' : 'bg-red-50'
                   }`}
                 >
                   <span className="text-xl mr-2"> {log.icon} </span>
@@ -786,7 +1016,7 @@
                   </div>
                   <div className={`font-bold ${log.type === 'good' ? 'text-green-600' : 'text-red-600'
                     }`
-}>
+                  }>
                     {log.type === 'good' ? '+' : '-'}{log.points}
                   </div>
                 </div>
@@ -1010,8 +1240,11 @@
                 }
               </div>
 
-              {/* Calendar grid */}
-              <div className="grid grid-cols-7 gap-2">
+              {/* Calendar grid - Use renderTrigger in key */}
+              <div 
+                className="grid grid-cols-7 gap-2" 
+                key={`calendar-grid-${activeKidId}-${currentDate.getMonth()}-${currentDate.getFullYear()}-${renderTrigger}`}
+              >
                 {renderCalendar()}
               </div>
 
@@ -1037,13 +1270,16 @@
 
                 <div className="flex space-x-4 mt-4">
                   <button 
-                                className={
-                    `flex-1 py-3 rounded-lg font-bold flex items-center justify-center ${activeBehavior === 'good'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-green-100 text-green-700'
-                    }`
-                  }
-                    onClick={() => setActiveBehavior('good')}
+                    className={
+                      `flex-1 py-3 rounded-lg font-bold flex items-center justify-center ${activeBehavior === 'good'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-green-100 text-green-700'
+                      }`
+                    }
+                    onClick={() => {
+                      setActiveBehavior('good');
+                      setSelectedBadBehavior(null); // Reset bad behavior selection when switching
+                    }}
                   >
                     Good Behavior 😊
                   </button>
@@ -1052,7 +1288,10 @@
                       ? 'bg-red-500 text-white'
                       : 'bg-red-100 text-red-700'
                     }`}
-                    onClick={() => setActiveBehavior('bad')}
+                    onClick={() => {
+                      setActiveBehavior('bad');
+                      setSelectedGoodBehavior(null); // Reset good behavior selection when switching
+                    }}
                   >
                     Needs Improvement 😟
                   </button>
@@ -1122,10 +1361,14 @@
                     : 'Record Needs Improvement'}
                 </button>
 
-                {/* Daily logs */}
+                {/* Daily logs - Use renderTrigger in key */}
                 <div className="mt-4">
                   <h3 className="text-lg font-bold mb-2"> Today's Behaviors:</h3>
-                  {renderDailyLogs()}
+                  <div 
+                    key={`daily-logs-${activeKidId}-${formatDateKey(selectedDate)}-${renderTrigger}`}
+                  >
+                    {renderDailyLogs()}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1285,10 +1528,15 @@
           </div>
         </div>
       );
-    };
+    }
 
     // Render the app
-    ReactDOM.render(<App />, document.getElementById('root'));
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    );
     </script>
   </body>
 </html>
