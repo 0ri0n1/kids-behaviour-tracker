@@ -186,15 +186,49 @@
       
       const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
       
+      // Function to load behaviors from localStorage
+      function loadBehaviors() {
+        const behaviors = localStorage.getItem('behaviors');
+        return behaviors ? JSON.parse(behaviors) : [];
+      }
+      
+      // Function to save app state to localStorage
+      function saveAppState(kids, activeKidId, kidsData) {
+        localStorage.setItem('kids', JSON.stringify(kids));
+        localStorage.setItem('activeKidId', activeKidId.toString());
+        localStorage.setItem('kidsData', JSON.stringify(kidsData));
+        console.log('App state saved to localStorage');
+      }
+      
+      // Function to load app state from localStorage
+      function loadAppState() {
+        const savedKids = localStorage.getItem('kids');
+        const savedActiveKidId = localStorage.getItem('activeKidId');
+        const savedKidsData = localStorage.getItem('kidsData');
+        
+        if (savedKids && savedKidsData) {
+          return {
+            kids: JSON.parse(savedKids),
+            activeKidId: parseInt(savedActiveKidId || '1', 10),
+            kidsData: JSON.parse(savedKidsData)
+          };
+        }
+        
+        return null;
+      }
+
+      // Load saved state or use defaults
+      const savedState = loadAppState();
+      
       // Children management
-      const [kids, setKids] = React.useState([{ id: 1, name: "My Kid", avatar: "👧" }]);
-      const [activeKidId, setActiveKidId] = React.useState(1);
+      const [kids, setKids] = React.useState(savedState?.kids || [{ id: 1, name: "My Kid", avatar: "👧" }]);
+      const [activeKidId, setActiveKidId] = React.useState(savedState?.activeKidId || 1);
       const [showKidManager, setShowKidManager] = React.useState(false);
       const [newKid, setNewKid] = React.useState({ name: "", avatar: "👶" });
       const [isAddingKid, setIsAddingKid] = React.useState(false);
       
       // Individual kid data
-      const [kidsData, setKidsData] = React.useState({
+      const [kidsData, setKidsData] = React.useState(savedState?.kidsData || {
         1: {
           points: 0,
           behaviors: {},
@@ -260,12 +294,6 @@
         };
       }, [showIconPicker]);
       
-      // Function to load behaviors from localStorage
-      function loadBehaviors() {
-        const behaviors = localStorage.getItem('behaviors');
-        return behaviors ? JSON.parse(behaviors) : [];
-      }
-
       // Track currently selected behaviors
       const [selectedGoodBehavior, setSelectedGoodBehavior] = React.useState(null);
       const [selectedBadBehavior, setSelectedBadBehavior] = React.useState(null);
@@ -856,6 +884,14 @@
         // Also increment render trigger to ensure components re-render
         setRenderTrigger(prev => prev + 1);
       }, [activeKidId, JSON.stringify(kidsData)]);
+      
+      // Save app state to localStorage whenever critical state changes
+      React.useEffect(() => {
+        // Only save if kids array is not empty
+        if (kids.length > 0) {
+          saveAppState(kids, activeKidId, kidsData);
+        }
+      }, [kids, activeKidId, kidsData]);
       
       // Additional UI refresh when behaviors or logs change
       React.useEffect(() => {
