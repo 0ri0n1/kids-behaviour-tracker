@@ -173,7 +173,12 @@
         <p>This application requires JavaScript to function. Please enable JavaScript in your browser settings.</p>
       </div>
     </noscript>
-
+    
+    <!-- Add emoji-mart dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@emoji-mart/data@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emoji-mart/react@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest"></script>
+    
     <script type="text/babel" data-presets="react">
     // Error Boundary Component
     class ErrorBoundary extends React.Component {
@@ -328,8 +333,17 @@
       });
       const [isAddingBehavior, setIsAddingBehavior] = React.useState(false);
       
+      // Add state for behavior type selection
+      const [behaviorTypeToAdd, setBehaviorTypeToAdd] = React.useState("good");
+      
       // Reference for the icon picker element
       const iconPickerRef = React.useRef(null);
+      
+      // Initialize emoji-mart data
+      React.useEffect(() => {
+        // Make emoji-mart data available to the component
+        window.emojiData = window.EmojiMartData;
+      }, []);
       
       // Add event listener to close emoji picker when clicking outside
       React.useEffect(() => {
@@ -374,7 +388,7 @@
         },
         {
           name: "Activities",
-          icons: ["🎯", "🎮", "🎲", "🧩", "🎭", "🎨", "👟", "🏆", "🏅", "🥇", "🥈", "🥉", "⚽", "⚾", "🏀", "🏐", "🏈", "🏉", "🎾", "🥏", "🎳", "🏏", "🏑", "🏒", "🥍", "🏓", "🏸", "🥊", "🥋", "🥅", "⛳", "⛸", "🎣", "🤿", "🎽", "🎿", "🛷", "🥌", "🎯", "🪀", "🪁", "🎱", "🔮", "🧿", "🎮", "🎰", "🎲", "🧩", "🧸", "♟️", "🎭", "🎨", "🧵", "🧶", "👓", "🕶", "🥽", "🥼", "🦺", "👔", "👕", "👖", "🧣", "🧤", "🧥", "🧦", "👗", "👘", "🥻", "🩱", "🩲", "🩳", "👙", "👚", "👛", "👜", "👝", "🛍", "🎒", "👞", "👟", "🥾", "🥿", "👠", "👡", "🩰", "👢", "👑", "👒", "🎩", "🎓", "🧢", "⛑", "📿", "💄", "💍", "💎", "📱", "📲", "💻", "⌨️", "🖥", "🖨", "🖱", "🖲", "🕹", "🗜", "💽", "💾", "💿", "📀", "📼", "📷", "📸", "📹", "🎥", "📽", "🎞", "📞", "☎️", "📟", "📠", "📺", "📻", "🎙", "🎚", "🎛", "🧭", "⏱", "⏲", "⏰", "🕰", "⌛", "⏳", "📡", "🔋", "🔌", "💡", "🔦", "🕯", "🪔", "🧯", "🛢", "💸", "💵", "💴", "💶", "💷", "💰", "💳", "💎", "⚖️", "🧰", "🔧", "🔨", "⚒", "🛠", "⛏", "🔩", "⚙️", "🧱", "⛓", "🧲", "🔫", "💣", "🧨", "🪓", "🔪", "🗡", "⚔️", "🛡"]
+          icons: ["🎯", "🎮", "🎲", "🧩", "🎭", "🎨", "👟", "🏆", "🏅", "🥇", "🥈", "🥉", "⚽", "⚾", "🏀", "🏐", "🏈", "🏉", "🎾", "🥏", "🎳", "🏏", "🏑", "🏒", "🥍", "🏓", "🏸", "🥊", "🥋", "🥅", "⛳", "⛸", "🎣", "🤿", "🎽", "🎿", "🛷", "🥌", "🎯", "🪀", "🪁", "🎱", "🔮", "🧿", "🎮", "🎰", "🎲", "🧩", "🧸", "♟️", "🎭", "🎨", "🧵", "🧶", "👓", "🕶", "🥽", "🥼", "🦺", "👔", "👕", "👖", "🧣", "🧤", "🧥", "🧦", "👗", "👘", "🥻", "🩱", "🩲", "🩳", "👙", "👚", "👛", "👜", "👝", "🛍", "🎒", "👞", "👟", "🥾", "🥿", "👠", "👡", "🩰", "👢", "👑", "👒", "🎩", "🎓", "🧢", "⛑", "📿", "💄", "💍", "💎", "📱", "📲", "💻", "⌨️", "🖥", "🖨", "🖱", "🖲", "🕹", "🗜", "💽", "💾", "💿", "📀", "📼", "📷", "📸", "📹", "🎥", "📽", "🎞", "📞", "☎️", "📟", "📠", "📺", "📻", "🎙", "🎚", "🎛", "🧭", "⏱", "⏲", "⏰", "🕰", "⌛", "⏳", "📡", "🔋", "🔌", "💡", "🔦", "🕯", "🪔", "🧯", "🛢", "💸", "💵", "💴", "💶", "💷", "💰", "💳", "💎", "⚖️", "🧰", "🔧", "🔨", "⚒", "🛠", "⛏", "🔩", "⚙️", "🧱", "⛓", "🧲", "🔫", "💣", "🧨", "🪓", "🔪", "🗡", "⚔️", "🛡", "🚬", "⚰️", "⚱️", "🏺", "🔮", "📿", "🧿", "💈", "⚗️", "🔭", "🔬", "🕳", "🩹", "🩺", "💊", "💉", "🩸", "🧬", "🦠", "🧫", "🧪", "🌡", "🧹", "🧺", "🧻", "🚽", "🚰", "🚿", "🛁", "🛀", "🧼", "🪒", "🧽", "🧴", "🛎", "🔑", "🗝", "🚪", "🪑", "🛋", "🛏", "🛌", "🧸", "🖼", "🛍", "🛒", "🎁", "🎈", "🎏", "🎀", "🎊", "🎉", "🎎", "🏮", "🎐", "🧧", "✉️", "📩", "📨", "📧", "💌", "📥", "📤", "📦", "🏷", "📪", "📫", "📬", "📭", "📮", "📯", "📜", "📃", "📄", "📑", "🧾", "📊", "📈", "📉", "🗒", "🗓", "📆", "📅", "🗑", "📇", "🗃", "🗳", "🗄", "📋", "📁", "📂", "🗂", "🗞", "📰", "📓", "📔", "📒", "📕", "📗", "📘", "📙", "📚", "📖", "🔖", "🧷", "🔗", "📎", "🖇", "📐", "📏", "🧮", "📌", "📍", "✂️", "🖊", "🖋", "✒️", "🖌", "🖍", "📝", "✏️", "🔍", "🔎", "🔏", "🔐", "🔒", "🔓"]
         },
         {
           name: "Food",
@@ -1485,85 +1499,24 @@
                 </button>
               </div>
               
-              {/* Search input */}
-              <input
-                type="text"
-                placeholder="Search by emoji or category..."
-                value={emojiSearchTerm}
-                onChange={(e) => setEmojiSearchTerm(e.target.value)}
-                className="emoji-search"
-              />
-              
-              {/* Show search status when searching */}
-              {emojiSearchTerm && (
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs bg-blue-100 text-blue-800 rounded-full px-2 py-0.5">
-                    Search: "{emojiSearchTerm}"
-                  </span>
-                  {filteredCategories.length > 0 && (
-                    <button 
-                      onClick={() => setEmojiSearchTerm('')}
-                      className="text-xs bg-gray-100 hover:bg-gray-200 rounded-full px-2 py-0.5"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
+              {/* Use emoji-mart picker component */}
+              {window.EmojiMart && (
+                <window.EmojiMart.Picker
+                  data={window.emojiData}
+                  onEmojiSelect={(emoji) => {
+                    setNewBehavior({...newBehavior, icon: emoji.native});
+                    setShowIconPicker(false);
+                  }}
+                  theme="light"
+                  previewPosition="none"
+                  skinTonePosition="search"
+                  navPosition="top"
+                  perLine={8}
+                  emojiSize={24}
+                  maxFrequentRows={2}
+                  searchPlaceholder="Search emojis..."
+                />
               )}
-              
-              {/* Category tabs */}
-              {!emojiSearchTerm && (
-                <div className="flex flex-wrap gap-1 mb-2">
-                  {iconCategories.map((category, index) => (
-                    <button
-                      key={index}
-                      className="px-2 py-0.5 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-800 text-xs"
-                      onClick={() => {
-                        // Scroll to category
-                        document.getElementById(`icon-category-${index}`).scrollIntoView({ behavior: 'smooth' });
-                      }}
-                    >
-                      {category.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-              
-              {/* Icons by category */}
-              <div className="icon-categories max-h-60 overflow-y-auto">
-                {(emojiSearchTerm ? filteredCategories : iconCategories).map((category, categoryIndex) => (
-                  category.icons.length > 0 ? (
-                    <div key={categoryIndex} id={`icon-category-${categoryIndex}`} className="mb-3">
-                      <h3 className="emoji-category-header">
-                        {category.name}
-                      </h3>
-                      <div className="emoji-grid">
-                        {category.icons.map((icon, iconIndex) => (
-                          <button
-                            key={`${categoryIndex}-${iconIndex}`}
-                            className="emoji-item"
-                            onClick={() => {
-                              setNewBehavior({...newBehavior, icon: icon});
-                              setShowIconPicker(false);
-                              setEmojiSearchTerm('');
-                            }}
-                            title={`Select ${icon}`}
-                          >
-                            {icon}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null
-                ))}
-                
-                {/* No results message */}
-                {emojiSearchTerm && filteredCategories.length === 0 && (
-                  <div className="text-center py-4 text-gray-500">
-                    No emojis found for "{emojiSearchTerm}"
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         );
