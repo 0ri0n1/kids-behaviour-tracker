@@ -77,6 +77,29 @@
         z-index: 50;
         padding: 1rem;
       }
+
+      /* Adding new styles for emoji popup */
+      .emoji-popup {
+        position: absolute;
+        top: calc(100% + 5px);
+        left: 0;
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+        width: 300px;
+        max-height: 350px;
+        overflow-y: auto;
+        z-index: 50;
+        border: 1px solid #e2e8f0;
+      }
+
+      /* Make sure the emoji popup is contained within viewport */
+      @media (max-width: 400px) {
+        .emoji-popup {
+          width: 250px;
+          left: -50px;
+        }
+      }
     </style>
     
     <!-- Fallback for script loading errors -->
@@ -208,9 +231,40 @@
       // Flag to disable p5.js if it causes issues
       const [useSimpleBackground, setUseSimpleBackground] = React.useState(false);
 
-      const [newBehavior, setNewBehavior] = React.useState({ description: "", points: 1, icon: "⭐" });
+      // State for managing behaviors and other UI elements
+      const [savedBehaviors, setSavedBehaviors] = React.useState(loadBehaviors() || []);
+      const [showIconPicker, setShowIconPicker] = React.useState(false);
+      const [newBehavior, setNewBehavior] = React.useState({
+        name: '',
+        icon: '',
+        pointValue: 1,
+        description: '',
+        trackFrequency: false
+      });
       const [isAddingBehavior, setIsAddingBehavior] = React.useState(false);
-      const [behaviorTypeToAdd, setBehaviorTypeToAdd] = React.useState("good");
+      
+      // Reference for the icon picker element
+      const iconPickerRef = React.useRef(null);
+      
+      // Add event listener to close emoji picker when clicking outside
+      React.useEffect(() => {
+        function handleClickOutside(event) {
+          if (showIconPicker && iconPickerRef.current && !iconPickerRef.current.contains(event.target)) {
+            setShowIconPicker(false);
+          }
+        }
+        
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+          document.removeEventListener('mousedown', handleClickOutside);
+        };
+      }, [showIconPicker]);
+      
+      // Function to load behaviors from localStorage
+      function loadBehaviors() {
+        const behaviors = localStorage.getItem('behaviors');
+        return behaviors ? JSON.parse(behaviors) : [];
+      }
 
       // Track currently selected behaviors
       const [selectedGoodBehavior, setSelectedGoodBehavior] = React.useState(null);
@@ -222,8 +276,10 @@
       // Add state to force re-renders
       const [renderTrigger, setRenderTrigger] = React.useState(0);
 
+      // Add state for behavior type selection
+      const [behaviorTypeToAdd, setBehaviorTypeToAdd] = React.useState("good");
+      
       // Add state for icon picker
-      const [showIconPicker, setShowIconPicker] = React.useState(false);
       const [iconCategories, setIconCategories] = React.useState([
         {
           name: "Faces",
@@ -1156,26 +1212,27 @@
         if (!showIconPicker) return null;
         
         return (
-          <div className="modal-backdrop" onClick={() => setShowIconPicker(false)}>
+          <div className="relative">
             <div 
-              className="bg-white rounded-xl shadow-xl p-4 w-full max-w-4xl max-h-screen overflow-y-auto"
-              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+              className="emoji-popup p-3"
+              onClick={(e) => e.stopPropagation()} 
+              ref={iconPickerRef}
             >
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Select an Icon</h2>
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-sm font-bold">Select an Icon</h2>
                 <button
                   onClick={() => setShowIconPicker(false)}
-                  className="text-2xl hover:text-gray-700">
+                  className="text-lg hover:text-gray-700">
                   ×
                 </button>
               </div>
               
               {/* Category tabs */}
-              <div className="flex flex-wrap gap-2 mb-4">
+              <div className="flex flex-wrap gap-1 mb-2">
                 {iconCategories.map((category, index) => (
                   <button
                     key={index}
-                    className="px-3 py-1 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-800 text-sm"
+                    className="px-2 py-0.5 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-800 text-xs"
                     onClick={() => {
                       // Scroll to category
                       document.getElementById(`icon-category-${index}`).scrollIntoView({ behavior: 'smooth' });
@@ -1187,17 +1244,17 @@
               </div>
               
               {/* Icons by category */}
-              <div className="icon-categories space-y-6">
+              <div className="icon-categories space-y-3 max-h-60 overflow-y-auto">
                 {iconCategories.map((category, categoryIndex) => (
                   <div key={categoryIndex} id={`icon-category-${categoryIndex}`}>
-                    <h3 className="font-bold text-lg mb-2 sticky top-0 bg-white py-2 border-b">
+                    <h3 className="font-bold text-xs mb-1 sticky top-0 bg-white py-1 border-b">
                       {category.name}
                     </h3>
-                    <div className="grid grid-cols-8 md:grid-cols-12 gap-2">
+                    <div className="grid grid-cols-6 gap-1">
                       {category.icons.map((icon, iconIndex) => (
                         <button
                           key={`${categoryIndex}-${iconIndex}`}
-                          className="icon-button h-10 w-10 flex items-center justify-center text-2xl border rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="icon-button h-8 w-8 flex items-center justify-center text-xl border rounded hover:bg-blue-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
                           onClick={() => {
                             setNewBehavior({...newBehavior, icon: icon});
                             setShowIconPicker(false);
@@ -1321,13 +1378,20 @@
                       <div className="relative mr-2">
                         <div 
                           className="w-16 p-2 border rounded-lg text-center text-xl cursor-pointer flex justify-center items-center hover:bg-gray-50"
-                          onClick={() => setShowIconPicker(true)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowIconPicker(true);
+                          }}
                         >
                           {newBehavior.icon || "⭐"}
                         </div>
-                        <div className="absolute -right-1 -bottom-1 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs cursor-pointer hover:bg-blue-600" onClick={() => setShowIconPicker(true)}>
+                        <div className="absolute -right-1 -bottom-1 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs cursor-pointer hover:bg-blue-600" onClick={(e) => {
+                          e.stopPropagation();
+                          setShowIconPicker(true);
+                        }}>
                           +
                         </div>
+                        {renderIconPicker()}
                       </div>
                       <input
                         type="text"
@@ -1721,8 +1785,6 @@
             </button>
           </div>
 
-          {/* Icon Picker Modal */}
-          {renderIconPicker()}
         </div>
       );
     }
