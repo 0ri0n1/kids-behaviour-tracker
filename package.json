@@ -1,16 +1,44 @@
 {
-  "name": "kids-behaviour-calendar",
+  "name": "kids-behaviour-tracker",
   "version": "2.0.0",
   "description": "A behavior tracking calendar for kids",
-  "main": "server.js",
+  "main": "main.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "electron .",
+    "dev": "nodemon --watch main.js --exec electron .",
+    "web": "node server.js",
+    "build": "electron-builder",
+    "pack": "electron-builder --dir"
   },
   "dependencies": {
     "express": "^4.21.2"
   },
   "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.0",
     "nodemon": "^3.0.1"
+  },
+  "build": {
+    "appId": "com.kids.behaviourtracker",
+    "productName": "Kids Behavior Tracker",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "public/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "public/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "public/icon.png"
+    }
   }
 }
