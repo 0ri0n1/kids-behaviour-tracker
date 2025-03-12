@@ -63,6 +63,20 @@
           opacity: 0;
         }
       }
+      
+      .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 50;
+        padding: 1rem;
+      }
     </style>
     
     <!-- Fallback for script loading errors -->
@@ -96,40 +110,50 @@
     <script type="text/babel">
     // Main App Component
     const App = () => {
+      // Children management
+      const [kids, setKids] = React.useState([{ id: 1, name: "My Kid", avatar: "👧" }]);
+      const [activeKidId, setActiveKidId] = React.useState(1);
+      const [showKidManager, setShowKidManager] = React.useState(false);
+      const [newKid, setNewKid] = React.useState({ name: "", avatar: "👶" });
+      const [isAddingKid, setIsAddingKid] = React.useState(false);
+      
+      // Individual kid data
+      const [kidsData, setKidsData] = React.useState({
+        1: {
+          points: 0,
+          behaviors: {},
+          dailyBehaviorLogs: {},
+          goodBehaviors: [
+            { id: 1, description: "Cleaning up toys", points: 2, icon: "🧹" },
+            { id: 2, description: "Helping a sibling", points: 3, icon: "🤝" },
+            { id: 3, description: "Completing homework", points: 2, icon: "📚" },
+            { id: 4, description: "Brushing teeth without reminder", points: 1, icon: "🪥" },
+            { id: 5, description: "Setting the table", points: 1, icon: "🍽️" }
+          ],
+          badBehaviors: [
+            { id: 1, description: "Not listening", points: 1, icon: "👂" },
+            { id: 2, description: "Fighting with siblings", points: 2, icon: "😠" },
+            { id: 3, description: "Not finishing food", points: 1, icon: "🍽️" },
+            { id: 4, description: "Screen time without permission", points: 2, icon: "📱" },
+            { id: 5, description: "Bedtime tantrum", points: 3, icon: "😭" }
+          ],
+          rewards: [
+            { id: 1, name: "Playground Time", points: 20, claimed: false, icon: "🛝" },
+            { id: 2, name: "Ice Cream", points: 30, claimed: false, icon: "🍦" },
+            { id: 3, name: "Movie Night", points: 50, claimed: false, icon: "🎬" },
+            { id: 4, name: "New Toy", points: 100, claimed: false, icon: "🧸" }
+          ]
+        }
+      });
+
       const [currentDate, setCurrentDate] = React.useState(new Date());
       const [selectedDate, setSelectedDate] = React.useState(new Date());
-      const [behaviors, setBehaviors] = React.useState({});
-      const [rewards, setRewards] = React.useState([
-        { id: 1, name: "Playground Time", points: 20, claimed: false, icon: "🛝" },
-        { id: 2, name: "Ice Cream", points: 30, claimed: false, icon: "🍦" },
-        { id: 3, name: "Movie Night", points: 50, claimed: false, icon: "🎬" },
-        { id: 4, name: "New Toy", points: 100, claimed: false, icon: "🧸" }
-      ]);
-      const [kidName, setKidName] = React.useState("My Kid");
       const [newReward, setNewReward] = React.useState({ name: "", points: 0, icon: "🎁" });
       const [isAddingReward, setIsAddingReward] = React.useState(false);
       const [activeBehavior, setActiveBehavior] = React.useState("good");
-      const [currentPoints, setCurrentPoints] = React.useState(0);
       const [showConfetti, setShowConfetti] = React.useState(false);
       // Flag to disable p5.js if it causes issues
       const [useSimpleBackground, setUseSimpleBackground] = React.useState(false);
-
-      // Behavior lists and management
-      const [goodBehaviors, setGoodBehaviors] = React.useState([
-        { id: 1, description: "Cleaning up toys", points: 2, icon: "🧹" },
-        { id: 2, description: "Helping a sibling", points: 3, icon: "🤝" },
-        { id: 3, description: "Completing homework", points: 2, icon: "📚" },
-        { id: 4, description: "Brushing teeth without reminder", points: 1, icon: "🪥" },
-        { id: 5, description: "Setting the table", points: 1, icon: "🍽️" }
-      ]);
-
-      const [badBehaviors, setBadBehaviors] = React.useState([
-        { id: 1, description: "Not listening", points: 1, icon: "👂" },
-        { id: 2, description: "Fighting with siblings", points: 2, icon: "😠" },
-        { id: 3, description: "Not finishing food", points: 1, icon: "🍽️" },
-        { id: 4, description: "Screen time without permission", points: 2, icon: "📱" },
-        { id: 5, description: "Bedtime tantrum", points: 3, icon: "😭" }
-      ]);
 
       const [newBehavior, setNewBehavior] = React.useState({ description: "", points: 1, icon: "⭐" });
       const [isAddingBehavior, setIsAddingBehavior] = React.useState(false);
@@ -142,9 +166,311 @@
       // Show/hide behavior lists
       const [showBehaviorManager, setShowBehaviorManager] = React.useState(false);
 
-      // Daily behavior logs with specific behaviors
-      const [dailyBehaviorLogs, setDailyBehaviorLogs] = React.useState({});
+      // Get the active kid's data
+      const activeKid = kids.find(kid => kid.id === activeKidId) || kids[0];
+      const activeKidData = kidsData[activeKidId] || kidsData[1];
+      
+      // Shorthand getters/setters for active kid's data
+      const currentPoints = activeKidData.points;
+      const setCurrentPoints = (pointsUpdater) => {
+        const newPoints = typeof pointsUpdater === 'function' 
+          ? pointsUpdater(activeKidData.points) 
+          : pointsUpdater;
+        
+        setKidsData({
+          ...kidsData,
+          [activeKidId]: {
+            ...activeKidData,
+            points: newPoints
+          }
+        });
+      };
+      
+      const behaviors = activeKidData.behaviors;
+      const setBehaviors = (behaviorsUpdater) => {
+        const newBehaviors = typeof behaviorsUpdater === 'function'
+          ? behaviorsUpdater(activeKidData.behaviors)
+          : behaviorsUpdater;
+          
+        setKidsData({
+          ...kidsData,
+          [activeKidId]: {
+            ...activeKidData,
+            behaviors: newBehaviors
+          }
+        });
+      };
+      
+      const dailyBehaviorLogs = activeKidData.dailyBehaviorLogs;
+      const setDailyBehaviorLogs = (logsUpdater) => {
+        const newLogs = typeof logsUpdater === 'function'
+          ? logsUpdater(activeKidData.dailyBehaviorLogs)
+          : logsUpdater;
+          
+        setKidsData({
+          ...kidsData,
+          [activeKidId]: {
+            ...activeKidData,
+            dailyBehaviorLogs: newLogs
+          }
+        });
+      };
+      
+      const goodBehaviors = activeKidData.goodBehaviors;
+      const setGoodBehaviors = (behaviorsUpdater) => {
+        const newBehaviors = typeof behaviorsUpdater === 'function'
+          ? behaviorsUpdater(activeKidData.goodBehaviors)
+          : behaviorsUpdater;
+          
+        setKidsData({
+          ...kidsData,
+          [activeKidId]: {
+            ...activeKidData,
+            goodBehaviors: newBehaviors
+          }
+        });
+      };
+      
+      const badBehaviors = activeKidData.badBehaviors;
+      const setBadBehaviors = (behaviorsUpdater) => {
+        const newBehaviors = typeof behaviorsUpdater === 'function'
+          ? behaviorsUpdater(activeKidData.badBehaviors)
+          : behaviorsUpdater;
+          
+        setKidsData({
+          ...kidsData,
+          [activeKidId]: {
+            ...activeKidData,
+            badBehaviors: newBehaviors
+          }
+        });
+      };
+      
+      const rewards = activeKidData.rewards;
+      const setRewards = (rewardsUpdater) => {
+        const newRewards = typeof rewardsUpdater === 'function'
+          ? rewardsUpdater(activeKidData.rewards)
+          : rewardsUpdater;
+          
+        setKidsData({
+          ...kidsData,
+          [activeKidId]: {
+            ...activeKidData,
+            rewards: newRewards
+          }
+        });
+      };
 
+      // Kid management functions
+      const addKid = () => {
+        if (newKid.name) {
+          const newKidId = Math.max(0, ...kids.map(k => k.id)) + 1;
+          
+          // Add new kid to kids list
+          setKids([...kids, { ...newKid, id: newKidId }]);
+          
+          // Initialize data structure for the new kid
+          setKidsData({
+            ...kidsData,
+            [newKidId]: {
+              points: 0,
+              behaviors: {},
+              dailyBehaviorLogs: {},
+              goodBehaviors: [
+                { id: 1, description: "Cleaning up toys", points: 2, icon: "🧹" },
+                { id: 2, description: "Helping a sibling", points: 3, icon: "🤝" },
+                { id: 3, description: "Completing homework", points: 2, icon: "📚" },
+                { id: 4, description: "Brushing teeth without reminder", points: 1, icon: "🪥" },
+                { id: 5, description: "Setting the table", points: 1, icon: "🍽️" }
+              ],
+              badBehaviors: [
+                { id: 1, description: "Not listening", points: 1, icon: "👂" },
+                { id: 2, description: "Fighting with siblings", points: 2, icon: "😠" },
+                { id: 3, description: "Not finishing food", points: 1, icon: "🍽️" },
+                { id: 4, description: "Screen time without permission", points: 2, icon: "📱" },
+                { id: 5, description: "Bedtime tantrum", points: 3, icon: "😭" }
+              ],
+              rewards: [
+                { id: 1, name: "Playground Time", points: 20, claimed: false, icon: "🛝" },
+                { id: 2, name: "Ice Cream", points: 30, claimed: false, icon: "🍦" },
+                { id: 3, name: "Movie Night", points: 50, claimed: false, icon: "🎬" },
+                { id: 4, name: "New Toy", points: 100, claimed: false, icon: "🧸" }
+              ]
+            }
+          });
+          
+          // Reset form
+          setNewKid({ name: "", avatar: "👶" });
+          setIsAddingKid(false);
+          
+          // Switch to the new kid
+          setActiveKidId(newKidId);
+        }
+      };
+      
+      const editKid = (id, updatedKid) => {
+        setKids(kids.map(kid => 
+          kid.id === id ? { ...kid, ...updatedKid } : kid
+        ));
+      };
+      
+      const deleteKid = (id) => {
+        // Don't allow deleting the last kid
+        if (kids.length <= 1) {
+          alert("You must have at least one child in the tracker.");
+          return;
+        }
+        
+        // Confirm before deletion
+        if (!confirm(`Are you sure you want to delete ${kids.find(k => k.id === id)?.name}?`)) {
+          return;
+        }
+        
+        // Remove the kid
+        setKids(kids.filter(kid => kid.id !== id));
+        
+        // If the active kid was deleted, switch to another kid
+        if (activeKidId === id) {
+          const remainingKidId = kids.find(kid => kid.id !== id)?.id || kids[0].id;
+          setActiveKidId(remainingKidId);
+        }
+        
+        // Remove the kid's data
+        const { [id]: _, ...remainingKidsData } = kidsData;
+        setKidsData(remainingKidsData);
+      };
+      
+      // Switch active kid
+      const switchKid = (id) => {
+        setActiveKidId(id);
+        // Reset behavior selections when switching
+        setSelectedGoodBehavior(null);
+        setSelectedBadBehavior(null);
+      };
+      
+      // Kid manager component
+      const renderKidManager = () => {
+        if (!showKidManager) return null;
+        
+        return (
+          <div className="modal-backdrop">
+            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold">Kid Manager</h2>
+                <button
+                  onClick={() => setShowKidManager(false)}
+                  className="text-2xl hover:text-gray-700">
+                  ×
+                </button>
+              </div>
+              
+              {/* List of kids */}
+              <div className="mb-4">
+                {kids.length > 0 ? (
+                  kids.map(kid => (
+                    <div 
+                      key={kid.id} 
+                      className={`flex items-center justify-between p-3 my-2 ${kid.id === activeKidId ? 'bg-blue-50 border-2 border-blue-300' : 'bg-gray-50'} rounded-lg`}
+                    >
+                      <div className="flex items-center">
+                        <span className="text-2xl mr-3">{kid.avatar}</span>
+                        <div className="flex-1">
+                          <div className="font-medium">{kid.name}</div>
+                          <div className="text-sm text-gray-600">
+                            {kidsData[kid.id]?.points || 0} stars earned
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button 
+                          onClick={() => {
+                            const newName = prompt("Enter new name:", kid.name);
+                            const newAvatar = prompt("Enter new avatar emoji:", kid.avatar);
+                            if (newName && newName.trim() !== "") {
+                              editKid(kid.id, { 
+                                name: newName, 
+                                avatar: newAvatar && newAvatar.trim() !== "" ? newAvatar : kid.avatar 
+                              });
+                            }
+                          }}
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
+                        >
+                          Edit
+                        </button>
+                        {kid.id !== activeKidId && (
+                          <button 
+                            onClick={() => switchKid(kid.id)}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                          >
+                            Select
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => deleteKid(kid.id)}
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    No children added yet
+                  </div>
+                )}
+              </div>
+              
+              {/* Add new kid form */}
+              {isAddingKid ? (
+                <div className="p-4 border-2 border-dashed border-blue-300 rounded-lg">
+                  <div className="flex mb-2 items-center">
+                    <input
+                      type="text"
+                      placeholder="Avatar"
+                      value={newKid.avatar}
+                      onChange={e => setNewKid({ ...newKid, avatar: e.target.value })}
+                      className="w-16 p-2 border rounded-lg mr-2 text-center text-xl"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Child's name"
+                      value={newKid.name}
+                      onChange={e => setNewKid({ ...newKid, name: e.target.value })}
+                      className="flex-1 p-2 border rounded-lg"
+                    />
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={addKid}
+                      className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg"
+                    >
+                      Add Child
+                    </button>
+                    <button
+                      onClick={() => {
+                        setNewKid({ name: "", avatar: "👶" });
+                        setIsAddingKid(false);
+                      }}
+                      className="flex-1 bg-gray-300 hover:bg-gray-400 py-2 rounded-lg"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsAddingKid(true)}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg"
+                >
+                  Add New Child
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      };
+      
       // Initialize p5.js or use CSS animation fallback
       React.useEffect(() => {
         // Skip p5.js initialization if the simple background is enabled
@@ -634,12 +960,22 @@
           <div className="text-center mb-6">
             <h1 className="app-title text-4xl md:text-5xl mb-2"> Star Behavior Tracker </h1>
             <div className="flex justify-center items-center mb-4">
-              <input
-                      type="text"
-                value={kidName}
-                onChange={e => setKidName(e.target.value)}
-                className="bg-white border border-purple-300 rounded-lg px-3 py-2 text-center text-xl font-bold outline-none focus:border-purple-500"
-              />
+              <div className="flex items-center">
+                <span className="text-2xl mr-2">{activeKid.avatar}</span>
+                <div 
+                  className="bg-white border border-purple-300 rounded-lg px-3 py-2 text-center text-xl font-bold outline-none focus:border-purple-500 cursor-pointer"
+                  onClick={() => setShowKidManager(true)}
+                >
+                  {activeKid.name}
+                </div>
+                <button 
+                  onClick={() => setShowKidManager(true)}
+                  className="ml-2 bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded-lg text-sm"
+                  title="Manage children"
+                >
+                  Manage Kids
+                </button>
+              </div>
             </div>
             <div className="bg-gradient-to-r from-purple-600 to-blue-500 text-white py-2 px-4 rounded-full inline-flex items-center">
               <span className="mr-2"> Total Stars: </span>
@@ -904,6 +1240,9 @@
               </div>
             </div>
           </div>
+
+          {/* Kid management modal */}
+          {renderKidManager()}
 
           {/* Behavior management modal */}
           {renderBehaviorManager()}
