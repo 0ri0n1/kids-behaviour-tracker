@@ -401,13 +401,160 @@
           return;
         }
         
+        // Define emoji keywords for better searchability
+        const emojiKeywords = {
+          // Faces category
+          "😊": ["smile", "happy", "smiling", "face"],
+          "😃": ["happy", "smile", "grin", "face"],
+          "😄": ["laugh", "happy", "smile", "grin", "face"],
+          "😁": ["grin", "happy", "smile", "face"],
+          "😆": ["laugh", "happy", "smile", "face"],
+          "😅": ["sweat", "smile", "happy", "face"],
+          "😂": ["laugh", "joy", "tears", "happy", "face"],
+          "🤣": ["rofl", "laugh", "joy", "tears", "happy", "face"],
+          "😍": ["love", "heart", "eyes", "face"],
+          "🥰": ["love", "smiling", "hearts", "face"],
+          "😘": ["kiss", "love", "face"],
+          "😗": ["kiss", "face"],
+          "😙": ["kiss", "smiling", "face"],
+          "😚": ["kiss", "closed", "eyes", "face"],
+          "😋": ["yum", "tongue", "delicious", "face"],
+          "😛": ["tongue", "face"],
+          "😜": ["wink", "tongue", "face"],
+          "😝": ["tongue", "closed", "eyes", "face"],
+          "🤑": ["money", "mouth", "rich", "face"],
+          "🤗": ["hug", "arms", "open", "face"],
+          "🤔": ["think", "thinking", "thoughtful", "face"],
+          "🤐": ["zip", "quiet", "silent", "face"],
+          "😐": ["neutral", "face"],
+          "😑": ["expressionless", "face"],
+          "😶": ["no", "mouth", "face"],
+          "😏": ["smirk", "face"],
+          "😒": ["unamused", "face"],
+          "🙄": ["rolling", "eyes", "face"],
+          "😬": ["grimace", "face"],
+          "🤥": ["lie", "liar", "nose", "pinocchio", "face"],
+          "😌": ["relieved", "face"],
+          "😔": ["sad", "pensive", "thoughtful", "face"],
+          "😪": ["sleepy", "tired", "face"],
+          "🤤": ["drooling", "face"],
+          "😴": ["sleep", "zzz", "face"],
+          "😷": ["mask", "sick", "ill", "face"],
+          "🤒": ["thermometer", "sick", "ill", "face"],
+          "🤕": ["bandage", "hurt", "injury", "face"],
+          "🤢": ["nauseated", "sick", "ill", "green", "face"],
+          "🤮": ["vomit", "sick", "ill", "face"],
+          "🤧": ["sneeze", "sick", "ill", "face"],
+          "😵": ["dizzy", "face"],
+          "🤯": ["exploding", "mind", "blown", "face"],
+          "🥳": ["party", "celebration", "face"],
+          "😎": ["cool", "sunglasses", "face"],
+          "🧐": ["monocle", "sophisticated", "face"],
+          "😕": ["confused", "face"],
+          "😟": ["worried", "face"],
+          "🙁": ["sad", "slightly", "frown", "face"],
+          "☹️": ["sad", "frown", "face"],
+          
+          // Animals (selected few to keep file size reasonable)
+          "🐶": ["dog", "puppy", "animal"],
+          "🐱": ["cat", "kitten", "animal"],
+          "🐭": ["mouse", "animal"],
+          "🐹": ["hamster", "animal"],
+          "🐰": ["rabbit", "bunny", "animal"],
+          "🦊": ["fox", "animal"],
+          "🐻": ["bear", "animal"],
+          "🐼": ["panda", "animal"],
+          "🐨": ["koala", "animal"],
+          "🐯": ["tiger", "animal"],
+          "🦁": ["lion", "animal"],
+          
+          // Objects (selected few)
+          "⭐": ["star", "object"],
+          "🌟": ["star", "glow", "object"],
+          "✨": ["sparkles", "object"],
+          "💫": ["dizzy", "star", "object"],
+          "🪄": ["wand", "magic", "object"],
+          "🔮": ["crystal", "ball", "magic", "object"],
+          "🎮": ["game", "controller", "object"],
+          "🎲": ["dice", "game", "object"],
+          
+          // Food (selected few)
+          "🍏": ["apple", "green", "food", "fruit"],
+          "🍎": ["apple", "red", "food", "fruit"],
+          "🍐": ["pear", "food", "fruit"],
+          "🍊": ["orange", "tangerine", "food", "fruit"],
+          "🍋": ["lemon", "food", "fruit"],
+          "🍌": ["banana", "food", "fruit"],
+          
+          // Symbols (selected few)
+          "❤️": ["heart", "love", "red", "symbol"],
+          "🧡": ["heart", "love", "orange", "symbol"],
+          "💛": ["heart", "love", "yellow", "symbol"],
+          "💚": ["heart", "love", "green", "symbol"],
+          "💙": ["heart", "love", "blue", "symbol"],
+          "💜": ["heart", "love", "purple", "symbol"],
+          
+          // Activities
+          "🎯": ["target", "bullseye", "dart", "game", "activity"],
+          "🎮": ["controller", "video", "game", "activity"],
+          "🎲": ["dice", "game", "activity"],
+          "🧩": ["puzzle", "piece", "game", "activity"],
+          "🎭": ["theater", "drama", "masks", "activity"],
+          "🎨": ["art", "palette", "paint", "activity"],
+          "👟": ["shoe", "sneaker", "running", "activity"],
+          "🏆": ["trophy", "prize", "award", "activity"],
+          "🏅": ["medal", "award", "activity"],
+          "⚽": ["soccer", "football", "ball", "sport", "activity"],
+          "⚾": ["baseball", "ball", "sport", "activity"],
+          "🏀": ["basketball", "ball", "sport", "activity"],
+          "🏐": ["volleyball", "ball", "sport", "activity"],
+          "🏈": ["football", "american", "sport", "activity"],
+          "🎾": ["tennis", "ball", "sport", "activity"],
+          "🎳": ["bowling", "sport", "activity"],
+          
+          // Travel
+          "🚗": ["car", "auto", "automobile", "vehicle", "travel"],
+          "🚕": ["taxi", "cab", "car", "vehicle", "travel"],
+          "🚙": ["suv", "car", "vehicle", "travel"],
+          "🚌": ["bus", "vehicle", "travel"],
+          "🏎": ["race", "car", "vehicle", "travel"],
+          "🚓": ["police", "car", "vehicle", "travel"],
+          "🚑": ["ambulance", "emergency", "vehicle", "travel"],
+          "🚒": ["fire", "truck", "engine", "vehicle", "travel"],
+          "🚲": ["bicycle", "bike", "cycling", "travel"],
+          "🛴": ["scooter", "travel"],
+          "🏍": ["motorcycle", "bike", "travel"],
+          "✈️": ["airplane", "plane", "flight", "travel"],
+          "🛫": ["takeoff", "airport", "plane", "travel"],
+          "🛬": ["landing", "airport", "plane", "travel"],
+          "🚀": ["rocket", "space", "travel"],
+          "🛸": ["ufo", "flying", "saucer", "travel"],
+          "🚁": ["helicopter", "chopper", "travel"],
+          "⛵": ["boat", "sailing", "ship", "travel"]
+        };
+        
+        const searchTermLower = emojiSearchTerm.toLowerCase();
+        
         const filtered = iconCategories.map(category => {
+          const categoryNameMatch = category.name.toLowerCase().includes(searchTermLower);
+          
           return {
             name: category.name,
-            icons: category.icons.filter(icon => 
-              // Simple search by checking if the emoji contains the search term
-              icon.toLowerCase().includes(emojiSearchTerm.toLowerCase())
-            )
+            icons: category.icons.filter(icon => {
+              // If searching by category name, include all icons in that category
+              if (categoryNameMatch) {
+                return true;
+              }
+              
+              // Check if the emoji has keywords defined
+              if (emojiKeywords[icon]) {
+                return emojiKeywords[icon].some(keyword => 
+                  keyword.includes(searchTermLower) || searchTermLower.includes(keyword)
+                );
+              }
+              // Fallback to try direct matching
+              return icon.includes(searchTermLower);
+            })
           };
         }).filter(category => category.icons.length > 0);
         
@@ -1341,11 +1488,28 @@
               {/* Search input */}
               <input
                 type="text"
-                placeholder="Search emojis..."
+                placeholder="Search by emoji or category..."
                 value={emojiSearchTerm}
                 onChange={(e) => setEmojiSearchTerm(e.target.value)}
                 className="emoji-search"
               />
+              
+              {/* Show search status when searching */}
+              {emojiSearchTerm && (
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs bg-blue-100 text-blue-800 rounded-full px-2 py-0.5">
+                    Search: "{emojiSearchTerm}"
+                  </span>
+                  {filteredCategories.length > 0 && (
+                    <button 
+                      onClick={() => setEmojiSearchTerm('')}
+                      className="text-xs bg-gray-100 hover:bg-gray-200 rounded-full px-2 py-0.5"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              )}
               
               {/* Category tabs */}
               {!emojiSearchTerm && (
