@@ -8,7 +8,9 @@
     "dev": "nodemon --watch main.js --exec electron .",
     "web": "node server.js",
     "build": "electron-builder",
-    "pack": "electron-builder --dir"
+    "pack": "electron-builder --dir",
+    "build:css": "tailwindcss -i ./src/css/input.css -o ./public/assets/css/tailwind.css",
+    "watch:css": "tailwindcss -i ./src/css/input.css -o ./public/assets/css/tailwind.css --watch"
   },
   "dependencies": {
     "express": "^4.21.2"
@@ -16,7 +18,10 @@
   "devDependencies": {
     "electron": "^30.0.0",
     "electron-builder": "^24.13.0",
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "tailwindcss": "^3.4.1",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.35"
   },
   "build": {
     "appId": "com.kids.behaviourtracker",

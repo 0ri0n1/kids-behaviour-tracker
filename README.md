@@ -12,10 +12,10 @@ A fun and interactive application for tracking children's behavior, managing rew
 
 ## Current Implementation
 
-The application is currently implemented as a single HTML file using:
+The application is currently implemented as:
 - React (loaded via CDN)
 - Babel for JSX transformation
-- Tailwind CSS for styling
+- Tailwind CSS for styling (properly compiled for production)
 - p5.js for background animations
 
 ## Development
@@ -23,11 +23,36 @@ The application is currently implemented as a single HTML file using:
 To run the development server:
 
 ```bash
+# Install dependencies
 npm install
-node server.js
+
+# Build Tailwind CSS
+npm run build:css
+
+# Run the server
+npm run web
+```
+
+For development with auto-refresh of CSS:
+
+```bash
+# Watch for CSS changes and rebuild
+npm run watch:css
 ```
 
 Then open http://localhost:3000 in your browser.
+
+## Building for Production
+
+For production builds:
+
+```bash
+# Build optimized CSS
+NODE_ENV=production npm run build:css
+
+# Start the server
+npm run web
+```
 
 ## Roadmap
 
