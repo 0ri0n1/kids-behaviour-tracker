@@ -442,11 +442,15 @@
       const [isEditingBehavior, setIsEditingBehavior] = React.useState(false);
       const [behaviorToEdit, setBehaviorToEdit] = React.useState(null);
       
+      // Add state for reward icon picker
+      const [showRewardIconPicker, setShowRewardIconPicker] = React.useState(false);
+      
       // Add state for behavior type selection
       const [behaviorTypeToAdd, setBehaviorTypeToAdd] = React.useState("good");
       
-      // Reference for the icon picker element
+      // Reference for the icon pickers
       const iconPickerRef = React.useRef(null);
+      const rewardIconPickerRef = React.useRef(null);
       
       // Initialize emoji-mart data
       React.useEffect(() => {
@@ -504,6 +508,20 @@
           document.removeEventListener('mousedown', handleClickOutside);
         };
       }, [showIconPicker]);
+      
+      // Handle clicking outside reward icon picker
+      React.useEffect(() => {
+        function handleClickOutside(event) {
+          if (showRewardIconPicker && rewardIconPickerRef.current && !rewardIconPickerRef.current.contains(event.target)) {
+            setShowRewardIconPicker(false);
+          }
+        }
+        
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+          document.removeEventListener('mousedown', handleClickOutside);
+        };
+      }, [showRewardIconPicker]);
       
       // Track currently selected behaviors
       const [selectedGoodBehavior, setSelectedGoodBehavior] = React.useState(null);
@@ -1867,6 +1885,215 @@
         );
       };
 
+      // Render Reward Icon Picker Modal
+      const renderRewardIconPicker = () => {
+        if (!showRewardIconPicker) return null;
+        
+        // Component that uses emoji-mart
+        const CustomEmojiPicker = () => {
+          const containerRef = React.useRef();
+          
+          React.useEffect(() => {
+            if (containerRef.current) {
+              // Clear any existing content
+              containerRef.current.innerHTML = '';
+              
+              try {
+                // Check if emoji-mart is available
+                const emojiMartLib = window.EmojiMart || window.emojiMart;
+                
+                if (emojiMartLib) {
+                  console.log('Using emoji-mart from CDN for rewards');
+                  
+                  // Create container for the picker
+                  const pickerContainer = document.createElement('div');
+                  pickerContainer.className = 'emoji-mart-container';
+                  containerRef.current.appendChild(pickerContainer);
+                  
+                  // Create the picker
+                  const picker = new emojiMartLib.Picker({
+                    onEmojiSelect: (emoji) => {
+                      console.log('Reward emoji selected:', emoji);
+                      
+                      // Safely extract the emoji character
+                      let emojiChar = emoji.native || '';
+                      if (!emojiChar && emoji.unified) {
+                        // Convert unified format to actual unicode character
+                        const codePoints = emoji.unified.split('-').map(hex => parseInt(hex, 16));
+                        emojiChar = String.fromCodePoint(...codePoints);
+                      }
+                      
+                      console.log('Setting reward emoji to:', emojiChar);
+                      
+                      // Update the reward with the selected emoji
+                      if (emojiChar) {
+                        setNewReward(prev => ({...prev, icon: emojiChar}));
+                        
+                        // Close after a short delay
+                        setTimeout(() => {
+                          setShowRewardIconPicker(false);
+                        }, 100);
+                      }
+                    },
+                    theme: 'light',
+                    set: 'native',
+                    previewPosition: 'none',
+                    skinTonePosition: 'none',
+                    maxFrequentRows: 0,
+                    perLine: 8
+                  });
+                  
+                  // Append the picker to our container
+                  pickerContainer.appendChild(picker);
+                } else {
+                  // Fall back to custom implementation
+                  console.warn('Emoji-mart not available for rewards, using fallback picker');
+                  renderCustomEmojiPicker();
+                }
+              } catch (e) {
+                console.error('Error rendering emoji picker for rewards:', e);
+                containerRef.current.textContent = 'Failed to load emoji picker';
+                
+                // Display detailed error to help debug
+                const errorDetails = document.createElement('pre');
+                errorDetails.style.color = 'red';
+                errorDetails.style.fontSize = '12px';
+                errorDetails.style.maxHeight = '100px';
+                errorDetails.style.overflow = 'auto';
+                errorDetails.textContent = e.toString() + '\n' + (e.stack || '');
+                containerRef.current.appendChild(errorDetails);
+              }
+            }
+            
+            // Custom emoji picker implementation as fallback
+            function renderCustomEmojiPicker() {
+              // Create a simple emoji grid with reward-oriented emojis
+              const emojis = ["🎁", "🎮", "🎯", "🎪", "🎭", "🎨", "🧸", "🎲", "🎬", "📱", "⌚", "💻", "🚗", "🚲", 
+                         "🛴", "🏄", "🏊", "⚽", "🏀", "🏈", "⚾", "🎾", "🏐", "🏉", "🥏", "🎳", "🏓", "🏒", 
+                         "🏸", "🥊", "🚵", "🧗", "🤿", "🎣", "🏕", "🧳", "🌋", "🏜", "🏝", "🏞", "🛫", "🛸", 
+                         "🚢", "🧩", "🧁", "🍦", "🍩", "🍰", "🍪", "🍫", "🍭", "🍹", "🍕", "🌮", "🌯", "🥐", 
+                         "🥨", "🥧", "🍿", "🍳", "🍔", "🥤", "🧃", "🧆", "🥣", "🥡", "🥠", "🦖", "🦕", "🦄", 
+                         "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🦁", "🐮", "🐵", "🙈", "🙉", 
+                         "🍎", "🍌", "🍓", "🫐", "🍈", "🍉", "🍊", "🍋", "🍍", "🥭", "🍑", "🎈", "🎆", "🎇", 
+                         "🧨", "✨", "🎉", "🎊", "🎫", "🎖", "🏆", "🥇", "🥈", "🥉", "📚", "📖", "🎵", "🎸"];
+              
+              // Create emoji grid container
+              const gridContainer = document.createElement('div');
+              gridContainer.style.display = 'grid';
+              gridContainer.style.gridTemplateColumns = 'repeat(8, 1fr)';
+              gridContainer.style.gap = '4px';
+              gridContainer.style.padding = '6px';
+              gridContainer.style.maxHeight = '250px';
+              gridContainer.style.overflowY = 'scroll';
+              gridContainer.style.scrollbarWidth = 'none'; // Firefox
+              gridContainer.style.msOverflowStyle = 'none'; // IE and Edge
+              
+              // Hide WebKit scrollbar
+              const styleSheet = document.createElement('style');
+              styleSheet.textContent = '.custom-reward-emoji-grid::-webkit-scrollbar { display: none; }';
+              document.head.appendChild(styleSheet);
+              gridContainer.classList.add('custom-reward-emoji-grid', 'no-scrollbar');
+              
+              // Create search input
+              const searchInput = document.createElement('input');
+              searchInput.type = 'text';
+              searchInput.placeholder = 'Search reward icons...';
+              searchInput.style.width = '100%';
+              searchInput.style.padding = '8px';
+              searchInput.style.marginBottom = '8px';
+              searchInput.style.borderRadius = '4px';
+              searchInput.style.border = '1px solid #ccc';
+              containerRef.current.appendChild(searchInput);
+              
+              // Add search functionality
+              searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredEmojis = emojis.filter(emoji => 
+                  emoji.toLowerCase().includes(searchTerm));
+                
+                // Clear grid
+                gridContainer.innerHTML = '';
+                
+                // Rebuild grid with filtered emojis
+                filteredEmojis.forEach(emoji => {
+                  const emojiButton = createEmojiButton(emoji);
+                  gridContainer.appendChild(emojiButton);
+                });
+              });
+              
+              // Function to create emoji buttons
+              function createEmojiButton(emoji) {
+                const button = document.createElement('button');
+                button.textContent = emoji;
+                button.style.fontSize = '24px';
+                button.style.padding = '4px';
+                button.style.border = 'none';
+                button.style.background = 'none';
+                button.style.cursor = 'pointer';
+                button.style.borderRadius = '4px';
+                button.style.transition = 'all 0.2s ease';
+                button.style.width = '30px';
+                button.style.height = '30px';
+                button.style.display = 'flex';
+                button.style.alignItems = 'center';
+                button.style.justifyContent = 'center';
+                
+                button.addEventListener('mouseover', () => {
+                  button.style.backgroundColor = '#f0f0f0';
+                  button.style.transform = 'scale(1.1)';
+                });
+                
+                button.addEventListener('mouseout', () => {
+                  button.style.backgroundColor = 'transparent';
+                  button.style.transform = 'scale(1)';
+                });
+                
+                button.addEventListener('click', () => {
+                  console.log('Custom reward emoji selected:', emoji);
+                  setNewReward(prev => ({...prev, icon: emoji}));
+                  setShowRewardIconPicker(false);
+                });
+                
+                return button;
+              }
+              
+              // Add emojis to grid
+              emojis.forEach(emoji => {
+                const emojiButton = createEmojiButton(emoji);
+                gridContainer.appendChild(emojiButton);
+              });
+              
+              // Add search and grid to container
+              containerRef.current.appendChild(gridContainer);
+            }
+          }, []);
+          
+          return <div ref={containerRef} className="simple-emoji-picker no-scrollbar"></div>;
+        };
+        
+        return (
+          <div className="relative">
+            <div 
+              className="emoji-popup p-3 no-scrollbar"
+              onClick={(e) => e.stopPropagation()} 
+              ref={rewardIconPickerRef}
+            >
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-sm font-bold">Select a Reward Icon</h2>
+                <button
+                  onClick={() => setShowRewardIconPicker(false)}
+                  className="text-lg hover:text-gray-700">
+                  ×
+                </button>
+              </div>
+              
+              {/* Custom emoji picker component */}
+              <CustomEmojiPicker />
+            </div>
+          </div>
+        );
+      };
+
       // Render behavior manager modal (modified version with icon picker)
       const renderBehaviorManager = () => {
         if (!showBehaviorManager) return null;
@@ -2512,16 +2739,30 @@
                   {
                     isAddingReward && (
                       <div className="mb-4 p-3 border-2 border-dashed border-blue-300 rounded-lg">
+                        <h3 className="font-bold mb-3">Add New Reward</h3>
                         <div className="flex mb-2 items-center">
+                          <div className="relative mr-2">
+                            <div 
+                              className="w-16 p-2 border rounded-lg text-center text-xl cursor-pointer flex justify-center items-center hover:bg-gray-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowRewardIconPicker(true);
+                              }}
+                            >
+                              {newReward.icon || "🎁"}
+                            </div>
+                            <div className="absolute -right-1 -bottom-1 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs cursor-pointer hover:bg-blue-600" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowRewardIconPicker(true);
+                              }}
+                            >
+                              +
+                            </div>
+                            {renderRewardIconPicker()}
+                          </div>
                           <input
-                                    type="text"
-                            placeholder="Icon"
-                            value={newReward.icon}
-                            onChange={e => setNewReward({ ...newReward, icon: e.target.value })}
-                            className="w-16 p-2 border rounded-lg mr-2 text-center text-xl"
-                          />
-                          <input
-                                    type="text"
+                            type="text"
                             placeholder="Reward name"
                             value={newReward.name}
                             onChange={e => setNewReward({ ...newReward, name: e.target.value })}
@@ -2538,11 +2779,23 @@
                               className="flex-1 p-2 border rounded-lg"
                             />
                         </div>
-                        <button
-                          onClick={addReward}
-                          className="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg">
-                          Add Reward
-                        </button>
+                        <div className="flex justify-end mt-4 space-x-2">
+                          <button
+                            onClick={() => {
+                              setIsAddingReward(false);
+                              setNewReward({ name: "", points: 0, icon: "🎁" });
+                            }}
+                            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={addReward}
+                            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
+                          >
+                            Add Reward
+                          </button>
+                        </div>
                       </div>
                     )
                   }
