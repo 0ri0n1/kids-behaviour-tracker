@@ -9,10 +9,12 @@ A fun and interactive application for tracking children's behavior, managing rew
 - 🎁 Reward system with customizable rewards
 - 📊 Daily behavior logs
 - ✨ Interactive UI with animations and visual feedback
+- 🖥️ Cross-platform desktop application (Windows, macOS, Linux)
 
 ## Current Implementation
 
-The application is currently implemented as:
+The application is implemented as:
+- Electron desktop application for Windows, macOS, and Linux
 - React (loaded via CDN)
 - Babel for JSX transformation
 - Tailwind CSS for styling (properly compiled for production)
@@ -20,7 +22,9 @@ The application is currently implemented as:
 
 ## Development
 
-To run the development server:
+### Web Version
+
+To run the development server for the web version:
 
 ```bash
 # Install dependencies
@@ -42,9 +46,29 @@ npm run watch:css
 
 Then open http://localhost:3000 in your browser.
 
+### Desktop Application
+
+To run the desktop application in development mode:
+
+```bash
+# Install dependencies
+npm install
+
+# Build Tailwind CSS
+npm run build:css
+
+# Start Electron app
+npm start
+
+# For auto-reload during development
+npm run dev
+```
+
 ## Building for Production
 
-For production builds:
+### Web Version
+
+For production web builds:
 
 ```bash
 # Build optimized CSS
@@ -54,9 +78,26 @@ NODE_ENV=production npm run build:css
 npm run web
 ```
 
+### Desktop Application
+
+To build the desktop application for distribution:
+
+```bash
+# Build for your current platform
+npm run build
+
+# Package without full distribution
+npm run pack
+```
+
+This will create distributables in the `dist` folder:
+- Windows: NSIS installer (.exe)
+- macOS: DMG file (.dmg)
+- Linux: AppImage (.AppImage)
+
 ## Roadmap
 
-- Convert to Electron app for desktop use
+- ✅ Convert to Electron app for desktop use
 - Implement data persistence
 - Add multiple child profiles
 - Improve production readiness (bundle assets, optimize for performance)

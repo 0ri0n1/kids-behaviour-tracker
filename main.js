@@ -13,7 +13,7 @@ function createWindow() {
       nodeIntegration: true,
       contextIsolation: false
     },
-    icon: path.join(__dirname, 'public/icon.png')
+    icon: path.join(__dirname, 'public/assets/kids behaviour tracker.jpg')
   });
 
   // Load the index.html file
