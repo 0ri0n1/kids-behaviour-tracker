@@ -9,8 +9,8 @@
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
     
-    <!-- Meta tag to prevent sensor API warnings -->
-    <meta http-equiv="Feature-Policy" content="accelerometer 'none'; gyroscope 'none'; magnetometer 'none'; ambient-light-sensor 'none'">
+    <!-- Updated meta tag to prevent all sensor API warnings -->
+    <meta http-equiv="Permissions-Policy" content="accelerometer=(), gyroscope=(), magnetometer=(), ambient-light-sensor=(), orientation-sensor=()">
     
     <!--
     PRODUCTION RECOMMENDATION: 
@@ -32,6 +32,38 @@
     
     <!-- Compiled Tailwind CSS -->
     <link rel="stylesheet" href="assets/css/tailwind.css">
+    
+    <!-- CSS for fallback animation -->
+    <style>
+      .simple-background {
+        background: linear-gradient(-45deg, #4338ca, #3b82f6, #60a5fa, #93c5fd);
+        background-size: 400% 400%;
+        animation: gradient 15s ease infinite;
+      }
+      
+      @keyframes gradient {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+      
+      @keyframes fall {
+        0% {
+          transform: translateY(-10px) rotate(0deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(100vh) rotate(360deg);
+          opacity: 0;
+        }
+      }
+    </style>
     
     <!-- Fallback for script loading errors -->
     <script>
@@ -79,6 +111,8 @@
       const [activeBehavior, setActiveBehavior] = React.useState("good");
       const [currentPoints, setCurrentPoints] = React.useState(0);
       const [showConfetti, setShowConfetti] = React.useState(false);
+      // Flag to disable p5.js if it causes issues
+      const [useSimpleBackground, setUseSimpleBackground] = React.useState(false);
 
       // Behavior lists and management
       const [goodBehaviors, setGoodBehaviors] = React.useState([
@@ -111,11 +145,27 @@
       // Daily behavior logs with specific behaviors
       const [dailyBehaviorLogs, setDailyBehaviorLogs] = React.useState({});
 
-      // Initialize p5.js
+      // Initialize p5.js or use CSS animation fallback
       React.useEffect(() => {
+        // Skip p5.js initialization if the simple background is enabled
+        if (useSimpleBackground) {
+          const container = document.getElementById('p5-container');
+          if (container) {
+            container.style.display = 'none';
+          }
+          document.body.classList.add('simple-background');
+          return;
+        }
+        
         try {
-          // p5.js sketch for background animations - avoiding sensor APIs
+          // p5.js sketch for background animations - explicitly avoiding all sensor APIs
           new p5((p) => {
+            // Explicitly disable device orientation and motion events
+            p.deviceOrientation = undefined;
+            p.deviceMoved = undefined;
+            p.deviceTurned = undefined;
+            p.deviceShaken = undefined;
+            
             const particles = [];
             const colors = ['#4338ca', '#3b82f6', '#60a5fa', '#93c5fd'];
             let canvasWidth = window.innerWidth;
@@ -124,6 +174,11 @@
             p.setup = () => {
               p.createCanvas(canvasWidth, canvasHeight);
               initializeParticles();
+              
+              // Disable any orientation-related features
+              if (p.setShakeThreshold) {
+                p.setShakeThreshold(9999); // Effectively disable shake detection
+              }
             };
 
             function initializeParticles() {
@@ -165,13 +220,25 @@
           }, 'p5-container');
         } catch (error) {
           console.error("P5.js initialization error:", error);
+          // Log specific info if it's a sensor-related error
+          if (error.message && (
+            error.message.includes('orientation') || 
+            error.message.includes('sensor') || 
+            error.message.includes('permission')
+          )) {
+            console.info("This appears to be a sensor permission error. Disabling p5.js animations.");
+          }
+          
           // Gracefully handle p5.js failure - remove the container to prevent further errors
           const container = document.getElementById('p5-container');
           if (container) {
             container.style.display = 'none';
           }
+          
+          // Provide a simple fallback background if p5 fails
+          document.body.style.background = 'linear-gradient(to right, #f0f4fd, #e6eefa)';
         }
-      }, []);
+      }, [useSimpleBackground]);
 
       // Helper functions for date operations
       const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
@@ -866,6 +933,17 @@
               </div>
             )
           }
+          
+          {/* Accessibility toggle for background animation */}
+          <div className="fixed bottom-2 right-2 z-40">
+            <button 
+              onClick={() => setUseSimpleBackground(!useSimpleBackground)}
+              className="text-xs bg-white/80 hover:bg-white/100 px-2 py-1 rounded-md shadow-sm text-gray-600"
+              title={useSimpleBackground ? "Enable particle animations" : "Switch to simple background"}
+            >
+              {useSimpleBackground ? "🌟 Enable particles" : "🎨 Simple background"}
+            </button>
+          </div>
         </div>
       );
     };
