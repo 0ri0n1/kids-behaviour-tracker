@@ -355,6 +355,90 @@
         });
       };
 
+      // Function to remove a behavior from daily logs
+      const removeBehavior = (logId) => {
+        // Ask for confirmation before removing
+        if (confirm("Are you sure you want to remove this behavior?")) {
+          const dateKey = formatDateKey(selectedDate);
+          
+          console.log(`REMOVING BEHAVIOR - Log ID: ${logId}, Date: ${dateKey}`);
+          
+          // Get current kid data directly from state to ensure we have the latest
+          const currentKidData = {...kidsData[activeKidId]};
+          
+          // Get current logs for this date
+          const currentDateLogs = currentKidData.dailyBehaviorLogs[dateKey] || [];
+          
+          // Find the log entry to be removed
+          const logToRemove = currentDateLogs.find(log => log.id === logId);
+          
+          if (logToRemove) {
+            console.log(`REMOVING - Found log to remove:`, logToRemove);
+            
+            // Adjust points based on the removed behavior
+            const pointsAdjustment = logToRemove.type === 'good' 
+              ? -logToRemove.points  // Subtract points for good behavior
+              : logToRemove.points;  // Add back points for bad behavior
+            
+            // Update daily behavior counts
+            const currentDayBehaviors = currentKidData.behaviors[dateKey] || { good: 0, bad: 0 };
+            const updatedDayBehaviors = {
+              ...currentDayBehaviors,
+              [logToRemove.type]: Math.max(0, (currentDayBehaviors[logToRemove.type] || 0) - 1)
+            };
+            
+            console.log(`REMOVING - Updating day behaviors from`, currentDayBehaviors, `to`, updatedDayBehaviors);
+            
+            // Create updated logs with the behavior removed
+            const updatedLogs = currentDateLogs.filter(log => log.id !== logId);
+            
+            // Create a single updated kid data object with all changes
+            const updatedKidData = {
+              ...currentKidData,
+              points: currentKidData.points + pointsAdjustment,
+              behaviors: {
+                ...currentKidData.behaviors,
+                [dateKey]: updatedDayBehaviors
+              },
+              dailyBehaviorLogs: {
+                ...currentKidData.dailyBehaviorLogs,
+                [dateKey]: updatedLogs
+              }
+            };
+            
+            // Update all kid data in a single operation
+            setKidsData({
+              ...kidsData,
+              [activeKidId]: updatedKidData
+            });
+            
+            console.log(`REMOVING - Updated kid data:`, updatedKidData);
+            console.log(`REMOVING - Adjusting points by ${pointsAdjustment}, new total: ${updatedKidData.points}`);
+            
+            // Force immediate UI refresh
+            setRenderTrigger(prev => prev + 1);
+            
+            // Force another UI refresh after a small delay to ensure changes are visible
+            setTimeout(() => {
+              console.log("VERIFYING REMOVAL - Checking if UI has updated");
+              
+              // Verify the current state after the update
+              console.log("Current kid data:", kidsData[activeKidId]);
+              console.log(`Current behaviors for ${dateKey}:`, kidsData[activeKidId]?.behaviors?.[dateKey]);
+              console.log(`Current logs for ${dateKey}:`, kidsData[activeKidId]?.dailyBehaviorLogs?.[dateKey]);
+              
+              // Force another render update
+              setRenderTrigger(prev => prev + 1);
+              
+              // Also force a date change to trigger calendar-related updates
+              const refreshDate = new Date(selectedDate);
+              refreshDate.setMilliseconds(refreshDate.getMilliseconds() + 1);
+              setSelectedDate(refreshDate);
+            }, 50);
+          }
+        }
+      };
+
       // Kid management functions
       const addKid = () => {
         if (newKid.name) {
@@ -1019,6 +1103,14 @@
                   }>
                     {log.type === 'good' ? '+' : '-'}{log.points}
                   </div>
+                  {/* Delete button */}
+                  <button 
+                    onClick={() => removeBehavior(log.id)}
+                    className="ml-2 text-gray-400 hover:text-red-500 transition-colors"
+                    title="Remove behavior"
+                  >
+                    🗑️
+                  </button>
                 </div>
               ))
             }
