@@ -57,7 +57,7 @@
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         z-index: 1000;
-        width: 320px;
+        width: 360px;
         max-width: 90vw;
         max-height: 400px;
         overflow-y: auto;
@@ -156,8 +156,8 @@
       }
 
       .emoji-item {
-        height: 32px;
-        width: 32px;
+        height: 30px;
+        width: 30px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1690,8 +1690,8 @@
               const gridContainer = document.createElement('div');
               gridContainer.style.display = 'grid';
               gridContainer.style.gridTemplateColumns = 'repeat(8, 1fr)';
-              gridContainer.style.gap = '5px';
-              gridContainer.style.padding = '8px';
+              gridContainer.style.gap = '4px';
+              gridContainer.style.padding = '6px';
               gridContainer.style.maxHeight = '250px';
               gridContainer.style.overflowY = 'auto';
               
@@ -1727,14 +1727,14 @@
                 const button = document.createElement('button');
                 button.textContent = emoji;
                 button.style.fontSize = '24px';
-                button.style.padding = '5px';
+                button.style.padding = '4px';
                 button.style.border = 'none';
                 button.style.background = 'none';
                 button.style.cursor = 'pointer';
                 button.style.borderRadius = '4px';
                 button.style.transition = 'all 0.2s ease';
-                button.style.width = '32px';
-                button.style.height = '32px';
+                button.style.width = '30px';
+                button.style.height = '30px';
                 button.style.display = 'flex';
                 button.style.alignItems = 'center';
                 button.style.justifyContent = 'center';
