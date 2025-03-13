@@ -349,9 +349,13 @@
       // Function to save app state to localStorage
       function saveAppState(kids, activeKidId, kidsData) {
         localStorage.setItem('kids', JSON.stringify(kids));
-        localStorage.setItem('activeKidId', activeKidId.toString());
+        localStorage.setItem('activeKidId', activeKidId);
         localStorage.setItem('kidsData', JSON.stringify(kidsData));
-        console.log('App state saved to localStorage');
+        
+        // Save parent PIN if it exists
+        if (parentPin) {
+          localStorage.setItem('parentPin', parentPin);
+        }
       }
       
       // Function to load app state from localStorage
@@ -1349,6 +1353,12 @@
 
       // Handle behavior recording with specific behavior selection
       const recordBehavior = () => {
+        // Check if parent mode is required for good behaviors
+        if (activeBehavior === 'good' && !isParentMode) {
+          setShowParentLogin(true);
+          return;
+        }
+        
         const dateKey = formatDateKey(selectedDate);
         
         console.log(`STARTING RECORD BEHAVIOR - Date: ${dateKey}, Kid: ${activeKid.name}(${activeKidId})`);
@@ -1449,6 +1459,12 @@
 
       // Add a new behavior
       const addBehavior = () => {
+        // Check if parent mode is required
+        if (!isParentMode) {
+          setShowParentLogin(true);
+          return;
+        }
+        
         if (newBehavior.description && newBehavior.points > 0) {
           if (isEditingBehavior && behaviorToEdit) {
             // Edit existing behavior
@@ -2371,25 +2387,29 @@
             case 1: // Welcome screen
               return (
                 <div className="text-center">
-                  <div className="mb-8 animate-bounce">
-                    <div className="text-8xl inline-flex justify-center items-center">
-                      <span className="text-yellow-400">⭐</span>
-                      <span className="mx-2 text-6xl">👧</span>
-                      <span className="text-yellow-400">⭐</span>
+                  <div className="mb-8">
+                    <div className="flex justify-center space-x-4">
+                      <div className="relative">
+                        <div className="absolute -top-6 -left-6 text-6xl animate-bounce delay-100">⭐</div>
+                        <div className="text-8xl bg-purple-100 rounded-full p-4 border-4 border-purple-300 shadow-lg">👧</div>
+                        <div className="absolute -bottom-6 -right-6 text-6xl animate-bounce delay-300">⭐</div>
+                      </div>
                     </div>
                   </div>
-                  <h2 className="text-3xl font-bold mb-6 text-purple-600">Welcome to Star Behavior Tracker!</h2>
-                  <p className="mb-4 text-lg">
-                    This app helps you track your children's behavior, award points for good behavior,
-                    and track areas that need improvement.
-                  </p>
-                  <p className="mb-8 text-lg">
-                    Let's get started by setting up your first child profile!
-                  </p>
+                  <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-blue-500 text-transparent bg-clip-text">Welcome to Star Behavior Tracker!</h2>
+                  <div className="bg-white rounded-lg p-4 shadow-sm mb-6">
+                    <p className="mb-4 text-lg text-gray-600">
+                      This app helps you track your children's behavior, award points for good behavior,
+                      and track areas that need improvement.
+                    </p>
+                    <p className="mb-2 text-lg text-gray-600">
+                      Let's get started by setting up your first child profile!
+                    </p>
+                  </div>
                   <div className="flex justify-center space-x-4">
                     <button
                       onClick={() => setSetupStep(2)}
-                      className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg text-xl"
+                      className="bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-90 text-white px-8 py-3 rounded-lg text-xl shadow-md transition"
                     >
                       Get Started
                     </button>
@@ -2399,7 +2419,7 @@
                         setSetupChild({ name: "My Child", avatar: "👧" });
                         setSetupStep(3);
                       }}
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg text-xl"
+                      className="bg-white border-2 border-purple-300 hover:bg-gray-50 text-purple-600 px-8 py-3 rounded-lg text-xl shadow-md transition"
                     >
                       Quick Setup
                     </button>
@@ -2410,43 +2430,49 @@
             case 2: // Add child
               return (
                 <div>
-                  <h2 className="text-3xl font-bold mb-6 text-purple-600 text-center">Add Your Child</h2>
-                  <div className="bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto">
-                    <div className="flex mb-4 items-center">
-                      <label className="w-24 text-lg">Avatar:</label>
-                      <div className="flex-1">
-                        <div className="flex items-center">
-                          <div className="w-16 h-16 flex items-center justify-center text-3xl border rounded-lg mr-3">
-                            {setupChild.avatar}
-                          </div>
-                          <select
-                            value={setupChild.avatar}
-                            onChange={e => setSetupChild({...setupChild, avatar: e.target.value})}
-                            className="p-2 border rounded-lg flex-1"
-                          >
-                            {["👧", "👦", "👶", "👼", "🧒", "👪", "🧚", "🦸", "🦹", "🧝"].map(emoji => (
-                              <option key={emoji} value={emoji}>{emoji}</option>
-                            ))}
-                          </select>
+                  <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-blue-500 text-transparent bg-clip-text text-center">Add Your Child</h2>
+                  <div className="bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto border border-purple-200">
+                    <div className="flex justify-center mb-6">
+                      <div className="relative">
+                        <div className="w-24 h-24 flex items-center justify-center text-5xl bg-purple-100 rounded-full border-4 border-purple-300 shadow-md">
+                          {setupChild.avatar}
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-2 shadow-md cursor-pointer">
+                          <span>✏️</span>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="flex mb-6 items-center">
-                      <label className="w-24 text-lg">Name:</label>
+                    <div className="mb-6">
+                      <label className="block text-gray-600 mb-2 font-medium">Select Avatar:</label>
+                      <div className="grid grid-cols-5 gap-2 mb-4">
+                        {["👧", "👦", "👶", "👼", "🧒", "👪", "🧚", "🦸", "🦹", "🧝"].map(emoji => (
+                          <div 
+                            key={emoji} 
+                            onClick={() => setSetupChild({...setupChild, avatar: emoji})}
+                            className={`p-2 text-2xl flex justify-center items-center rounded-lg cursor-pointer hover:bg-gray-50 ${setupChild.avatar === emoji ? 'bg-purple-100 border-2 border-purple-300' : 'border border-gray-200'}`}
+                          >
+                            {emoji}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="mb-6">
+                      <label className="block text-gray-600 mb-2 font-medium">Child's Name:</label>
                       <input
                         type="text"
                         placeholder="Enter child's name"
                         value={setupChild.name}
                         onChange={e => setSetupChild({...setupChild, name: e.target.value})}
-                        className="flex-1 p-2 border rounded-lg"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:border-purple-500 outline-none shadow-sm"
                       />
                     </div>
                     
-                    <div className="flex justify-between">
+                    <div className="flex justify-between mt-6">
                       <button
                         onClick={() => setSetupStep(1)}
-                        className="bg-gray-300 hover:bg-gray-400 px-6 py-2 rounded-lg"
+                        className="bg-white border-2 border-gray-300 hover:bg-gray-50 px-6 py-2 rounded-lg text-gray-600 shadow-sm transition"
                       >
                         Back
                       </button>
@@ -2458,7 +2484,7 @@
                             alert("Please enter your child's name");
                           }
                         }}
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg"
+                        className="bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-90 text-white px-6 py-2 rounded-lg shadow-md transition"
                       >
                         Next
                       </button>
@@ -2470,20 +2496,35 @@
             case 3: // Completion
               return (
                 <div className="text-center">
-                  <h2 className="text-3xl font-bold mb-6 text-purple-600">All Set!</h2>
-                  <p className="mb-4 text-lg">
-                    You're all set up and ready to start tracking {setupChild.name}'s behavior!
-                  </p>
-                  <div className="flex justify-center items-center text-5xl my-8">
-                    {setupChild.avatar} ⭐ 🎉
+                  <div className="mb-6">
+                    <span className="text-5xl animate-bounce inline-block">🎉</span>
                   </div>
-                  <p className="mb-8 text-lg">
-                    Press the button below to start using the Star Behavior Tracker.
-                  </p>
+                  <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-blue-500 text-transparent bg-clip-text">All Set!</h2>
+                  
+                  <div className="bg-white rounded-lg p-6 shadow-md border border-purple-200 mb-8">
+                    <p className="mb-4 text-lg text-gray-600">
+                      You're all set up and ready to start tracking {setupChild.name}'s behavior!
+                    </p>
+                    
+                    <div className="flex justify-center my-6">
+                      <div className="relative">
+                        <div className="w-24 h-24 flex items-center justify-center text-5xl bg-purple-100 rounded-full border-4 border-purple-300 shadow-md">
+                          {setupChild.avatar}
+                        </div>
+                        <div className="absolute top-0 right-0 transform -translate-y-1/4 translate-x-1/4 text-4xl animate-bounce">⭐</div>
+                        <div className="absolute bottom-0 left-0 transform translate-y-1/4 -translate-x-1/4 text-4xl animate-bounce delay-200">⭐</div>
+                      </div>
+                    </div>
+                    
+                    <p className="text-lg text-gray-600">
+                      Press the button below to start using the Star Behavior Tracker.
+                    </p>
+                  </div>
+                  
                   <div className="flex justify-center">
                     <button
                       onClick={completeSetup}
-                      className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg text-xl"
+                      className="bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-90 text-white px-8 py-3 rounded-lg text-xl shadow-md transition transform hover:scale-105"
                     >
                       Start Tracking
                     </button>
@@ -2521,10 +2562,142 @@
         };
         
         return (
-          <div className="max-w-4xl mx-auto my-8">
-            {renderProgressBar()}
-            <div className="bg-blue-50 p-8 rounded-xl shadow-lg">
-              {renderStepContent()}
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-50 bg-opacity-90 z-50 overflow-y-auto p-4">
+            <div className="w-full max-w-3xl bg-white rounded-xl shadow-xl border border-purple-200 overflow-hidden">
+              <div className="bg-gradient-to-r from-purple-600 to-blue-500 p-4 text-white">
+                <h1 className="text-3xl font-bold text-center">Star Behavior Tracker</h1>
+              </div>
+              <div className="p-6">
+                {renderProgressBar()}
+                <div className="bg-blue-50 p-8 rounded-xl shadow-lg border border-blue-100">
+                  {renderStepContent()}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+      
+      // Parent Lock Feature
+      const [isParentMode, setIsParentMode] = React.useState(false);
+      const [showParentLogin, setShowParentLogin] = React.useState(false);
+      const [parentPin, setParentPin] = React.useState(() => {
+        // Load parent PIN from localStorage or use default
+        const savedPin = localStorage.getItem('parentPin');
+        return savedPin || "1234"; // Default PIN
+      });
+      const [enteredPin, setEnteredPin] = React.useState("");
+      const [pinError, setPinError] = React.useState("");
+      
+      // Function to handle parent login
+      const handleParentLogin = () => {
+        if (enteredPin === parentPin) {
+          setIsParentMode(true);
+          setShowParentLogin(false);
+          setEnteredPin("");
+          setPinError("");
+        } else {
+          setPinError("Incorrect PIN. Please try again.");
+          setEnteredPin("");
+        }
+      };
+      
+      // Function to handle parent logout
+      const handleParentLogout = () => {
+        setIsParentMode(false);
+      };
+      
+      // Function to change parent PIN
+      const handleChangePin = () => {
+        const newPin = prompt("Enter new PIN (4 digits):");
+        if (newPin && /^\d{4}$/.test(newPin)) {
+          setParentPin(newPin);
+          localStorage.setItem('parentPin', newPin);
+          alert("PIN changed successfully!");
+        } else if (newPin) {
+          alert("PIN must be 4 digits.");
+        }
+      };
+      
+      // Parent Login Modal Component
+      const ParentLoginModal = () => {
+        if (!showParentLogin) return null;
+        
+        return (
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
+            <div className="bg-white rounded-xl shadow-xl overflow-hidden w-full max-w-md">
+              <div className="bg-gradient-to-r from-purple-600 to-blue-500 p-4 text-white">
+                <h2 className="text-2xl font-bold text-center">Parent Login</h2>
+              </div>
+              
+              <div className="p-6">
+                <p className="mb-4 text-center text-gray-600">Enter your 4-digit PIN to access parent mode</p>
+                
+                <div className="mb-4">
+                  <input
+                    type="password"
+                    maxLength="4"
+                    value={enteredPin}
+                    onChange={(e) => setEnteredPin(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
+                    className="w-full p-3 text-center text-2xl tracking-widest border border-gray-300 rounded-lg focus:border-purple-500 outline-none"
+                    placeholder="****"
+                    autoFocus
+                  />
+                  
+                  {pinError && (
+                    <p className="mt-2 text-red-500 text-center">{pinError}</p>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, null, 0, "del"].map((num, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        if (num === "del") {
+                          setEnteredPin(prev => prev.slice(0, -1));
+                        } else if (num !== null) {
+                          setEnteredPin(prev => prev.length < 4 ? prev + num : prev);
+                        }
+                      }}
+                      className={`p-4 text-xl font-bold rounded-lg ${
+                        num === "del" 
+                          ? "bg-red-100 hover:bg-red-200 text-red-600" 
+                          : num === null 
+                            ? "invisible" 
+                            : "bg-gray-100 hover:bg-gray-200"
+                      }`}
+                    >
+                      {num === "del" ? "⌫" : num}
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="flex justify-between">
+                  <button
+                    onClick={() => {
+                      setShowParentLogin(false);
+                      setEnteredPin("");
+                      setPinError("");
+                    }}
+                    className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg"
+                  >
+                    Cancel
+                  </button>
+                  
+                  <button
+                    onClick={handleParentLogin}
+                    disabled={enteredPin.length !== 4}
+                    className={`px-4 py-2 rounded-lg ${
+                      enteredPin.length === 4
+                        ? "bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-90 text-white"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    }`}
+                  >
+                    Login
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -2539,6 +2712,19 @@
             <>
               {/* Header */}
               <div className="text-center mb-6">
+                <div className="flex justify-end">
+                  <button
+                    onClick={isParentMode ? handleParentLogout : () => setShowParentLogin(true)}
+                    className={`px-2 py-1 rounded text-sm ${
+                      isParentMode 
+                        ? "bg-green-500 hover:bg-green-600 text-white" 
+                        : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                    }`}
+                    title={isParentMode ? "Parent Mode Active (Click to Exit)" : "Enter Parent Mode"}
+                  >
+                    {isParentMode ? "👨‍👩‍👧 Exit Parent Mode" : "👨‍👩‍👧 Parent Mode"}
+                  </button>
+                </div>
                 <h1 className="app-title text-4xl md:text-5xl mb-2"> Star Behavior Tracker </h1>
                 <div className="flex justify-center items-center mb-4">
                   <div className="flex items-center">
@@ -2707,9 +2893,15 @@
                           : 'bg-red-500 hover:bg-red-600 text-white'
                         }`}
                     >
-                      {activeBehavior === 'good'
-                        ? 'Record Good Behavior'
-                        : 'Record Needs Improvement'}
+                      {activeBehavior === 'good' && !isParentMode ? (
+                        <span className="flex items-center justify-center">
+                          <span className="mr-2">🔒</span> Record Good Behavior
+                        </span>
+                      ) : activeBehavior === 'good' ? (
+                        'Record Good Behavior'
+                      ) : (
+                        'Record Needs Improvement'
+                      )}
                     </button>
 
                     {/* Daily logs - Use renderTrigger in key */}
@@ -2862,36 +3054,39 @@
               </div>
 
               {/* Kid management modal */}
-              {renderKidManager()}
+              {showKidManager && renderKidManager()}
 
               {/* Behavior management modal */}
-              {renderBehaviorManager()}
+              {showBehaviorManager && renderBehaviorManager()}
 
               {/* Confetti effect */}
-              {
-                showConfetti && (
-                  <div className="fixed inset-0 pointer-events-none z-50">
-                    {
-                      Array.from({ length: 50 }).map((_, i) => (
-                        <div
-                                key={i}
-                                className="absolute"
-                                style={{
-                                left: `${Math.random() * 100}%`,
-                                top: '-20px',
-                                width: `${Math.random() * 20 + 10}px`,
-                                height: `${Math.random() * 20 + 10}px`,
-                                backgroundColor: ['#FFD700', '#4338CA', '#3B82F6', '#EC4899'][Math.floor(Math.random() * 4)],
-                                borderRadius: '50%',
-                                animation: `fall ${Math.random() * 3 + 2}s linear forwards`,
-                                animationDelay: `${Math.random() * 2}s`
-                              }}
-                        />
-                      ))
-                    }
-                  </div>
-                )
-              }
+              {showConfetti && (
+                <div className="fixed inset-0 pointer-events-none z-50">
+                  <div className="p5-wrapper" id="p5-container"></div>
+                </div>
+              )}
+              
+              {/* Parent Login Modal */}
+              <ParentLoginModal />
+              
+              {/* Parent Mode Settings (only visible when in parent mode) */}
+              {isParentMode && (
+                <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 border border-purple-300 z-40">
+                  <h3 className="font-bold text-purple-600 mb-2">Parent Settings</h3>
+                  <button
+                    onClick={handleChangePin}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm block mb-2 w-full"
+                  >
+                    Change PIN
+                  </button>
+                  <button
+                    onClick={handleParentLogout}
+                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm block w-full"
+                  >
+                    Exit Parent Mode
+                  </button>
+                </div>
+              )}
               
               {/* Accessibility toggle for background animation */}
               <div className="fixed bottom-2 right-2 z-40">
@@ -2903,7 +3098,7 @@
                   {useSimpleBackground ? "🌟 Enable particles" : "🎨 Simple background"}
                 </button>
               </div>
-
+ 
               {/* Footer with settings */}
               <div className="mt-8 pt-4 border-t border-gray-200">
                 <div className="flex justify-center">
@@ -2926,7 +3121,7 @@
                     Reset App
                   </button>
                   <span className="text-gray-300 mx-2">|</span>
-                  <button 
+                  <button
                     onClick={() => setUseSimpleBackground(!useSimpleBackground)}
                     className="text-blue-500 hover:text-blue-700 text-sm mx-2"
                   >

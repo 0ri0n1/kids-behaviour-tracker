@@ -5,7 +5,7 @@
 - [x] Create basic Express server
 - [x] Set up GitHub repository
 - [x] Configure Electron for desktop application
-- [ ] Create application icon
+- [x] Create application icon
   - [ ] Design icon in multiple formats (PNG, ICO, ICNS)
   - [ ] Add icons to public directory
 
