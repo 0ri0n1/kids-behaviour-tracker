@@ -2321,6 +2321,7 @@
         const stepTitles = [
           "Welcome to Star Behavior Tracker!",
           "Let's Add Your First Child",
+          "Set Parent PIN",
           "Setup Complete!"
         ];
         
@@ -2376,6 +2377,9 @@
             // Immediately save to localStorage to prevent setup showing again
             saveAppState([newKid], 1, initialKidsData);
           }
+          
+          // Ensure the parent PIN is saved to localStorage
+          localStorage.setItem('parentPin', parentPin);
           
           // Exit setup mode
           setShowSetupWizard(false);
@@ -2492,8 +2496,80 @@
                   </div>
                 </div>
               );
+            
+            case 3: // Set Parent PIN
+              return (
+                <div>
+                  <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-blue-500 text-transparent bg-clip-text text-center">Set Parent PIN</h2>
+                  <div className="bg-white p-6 rounded-lg shadow-lg max-w-md mx-auto border border-purple-200">
+                    <div className="mb-6 text-center">
+                      <div className="text-5xl mb-4">🔒</div>
+                      <p className="text-gray-600 mb-4">
+                        Create a 4-digit PIN to access parent-only features.
+                        You'll need this PIN to:
+                      </p>
+                      <ul className="text-left text-gray-600 mb-4 space-y-1">
+                        <li className="flex items-center"><span className="text-green-500 mr-2">✓</span> Approve good behavior</li>
+                        <li className="flex items-center"><span className="text-green-500 mr-2">✓</span> Manage rewards</li>
+                        <li className="flex items-center"><span className="text-green-500 mr-2">✓</span> Change settings</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="mb-6">
+                      <label className="block text-gray-600 mb-2 font-medium">Enter 4-digit PIN:</label>
+                      <input
+                        type="password"
+                        placeholder="Enter 4-digit PIN"
+                        value={enteredPin}
+                        onChange={e => setEnteredPin(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:border-purple-500 outline-none shadow-sm text-center text-2xl tracking-widest"
+                        maxLength="4"
+                      />
+                      <p className="text-sm text-gray-500 mt-1">PIN must be exactly 4 digits</p>
+                    </div>
+                    
+                    <div className="flex justify-between mt-6">
+                      <button
+                        onClick={() => {
+                          setEnteredPin("");
+                          setSetupStep(2);
+                        }}
+                        className="bg-white border-2 border-gray-300 hover:bg-gray-50 px-6 py-2 rounded-lg text-gray-600 shadow-sm transition"
+                      >
+                        Back
+                      </button>
+                      <button
+                        onClick={() => {
+                          // Skip PIN setup and keep default
+                          setEnteredPin("");
+                          setSetupStep(4);
+                        }}
+                        className="bg-white border-2 border-purple-300 hover:bg-gray-50 text-purple-600 px-6 py-2 rounded-lg shadow-sm transition"
+                      >
+                        Use Default PIN
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (enteredPin.length === 4) {
+                            setParentPin(enteredPin);
+                            localStorage.setItem('parentPin', enteredPin);
+                            setEnteredPin("");
+                            setSetupStep(4);
+                          } else {
+                            alert("Please enter a 4-digit PIN");
+                          }
+                        }}
+                        className={`bg-gradient-to-r from-purple-600 to-blue-500 hover:opacity-90 text-white px-6 py-2 rounded-lg shadow-md transition ${enteredPin.length !== 4 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={enteredPin.length !== 4}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
               
-            case 3: // Completion
+            case 4: // Completion
               return (
                 <div className="text-center">
                   <div className="mb-6">
